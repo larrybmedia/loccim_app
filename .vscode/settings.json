@@ -1,0 +1,7 @@
+{
+  "python.defaultInterpreterPath": "C:\\loccim_app\\loccim_backend\\venv\\Scripts\\python.exe",
+  "python.analysis.autoSearchPaths": true,
+  "python.analysis.extraPaths": [
+    "C:\\loccim_app\\loccim_backend\\venv\\Lib\\site-packages"
+  ]
+}

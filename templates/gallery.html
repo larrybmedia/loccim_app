@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LOCCIM Media Gallery Vault</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f9;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* 🚪 SIDEBAR MENU STYLING */
+        .sidebar {
+            width: 260px;
+            background-color: #4b0082;
+            color: white;
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+            z-index: 100;
+        }
+
+        .sidebar h2 {
+            font-size: 20px;
+            margin-bottom: 25px;
+            text-align: center;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 15px;
+        }
+
+        .sidebar a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar a:hover, .sidebar a.active {
+            background-color: rgba(255, 255, 255, 0.15);
+            color: white;
+        }
+
+        .sidebar a.logout-btn {
+            margin-top: auto;
+            background-color: #e74c3c;
+            color: white;
+            text-align: center;
+            justify-content: center;
+        }
+
+        .sidebar a.logout-btn:hover {
+            background-color: #c0392b;
+        }
+
+        /* 🖥️ MAIN WORKSPACE PANEL STYLING */
+        .main {
+            margin-left: 260px;
+            padding: 40px;
+            flex-grow: 1;
+            padding-bottom: 100px;
+        }
+
+        .main h1 {
+            color: #2c3e50;
+            font-size: 28px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 15px;
+        }
+
+        /* 📤 FORM SECTIONS CONTAINER */
+        .management-section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border-top: 4px solid #4b0082;
+            margin-bottom: 35px;
+        }
+
+        .management-section h2 {
+            font-size: 18px;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            align-items: flex-end;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #7f8c8d;
+            text-transform: uppercase;
+        }
+
+        .form-group input, .form-group select {
+            padding: 10px 14px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: #4b0082;
+        }
+
+        .action-btn {
+            background-color: #4b0082;
+            color: white;
+            border: none;
+            padding: 11px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .action-btn:hover {
+            background-color: #360062;
+        }
+
+        /* 🗂️ COLUMNED SPLIT WORKSPACE */
+        .gallery-split-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        .gallery-column {
+            background: rgba(255, 255, 255, 0.5);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px dashed #dcdde1;
+        }
+
+        .gallery-column h3 {
+            color: #2c3e50;
+            font-size: 18px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #bdc3c7;
+        }
+
+        /* 🖼️ GALLERY PRESENTATION GRID */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .gallery-item {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+            cursor: pointer;
+            border: 3px solid transparent;
+            -webkit-user-select: none; /* Safari, Chrome, Opera, iOS */
+            -moz-user-select: none;    /* Firefox */
+            -ms-user-select: none;     /* Internet Explorer/Edge */
+            user-select: none;         /* Standard syntax */
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+        }
+
+        .gallery-item.selected {
+            border-color: #4b0082;
+            background-color: #fafdff;
+            transform: scale(0.98);
+        }
+
+        .media-preview-container {
+            width: 100%;
+            height: 160px;
+            background-color: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .media-preview-container img, .media-preview-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .media-preview-container img {
+            pointer-events: none;
+        }
+
+        .badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+            z-index: 2;
+        }
+
+        .select-checkbox-overlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.8);
+            border: 2px solid #bdc3c7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: transparent;
+            font-weight: bold;
+            transition: all 0.2s;
+            z-index: 2;
+        }
+
+        .gallery-item:hover .select-checkbox-overlay {
+            border-color: #4b0082;
+        }
+
+        .gallery-item.selected .select-checkbox-overlay {
+            background: #4b0082;
+            border-color: #4b0082;
+            color: white;
+        }
+
+        .gallery-info {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .gallery-info h4 {
+            color: #2c3e50;
+            font-size: 14px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 30px;
+            color: #7f8c8d;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            font-size: 14px;
+        }
+
+        .empty-global-notice {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 50px;
+            color: #7f8c8d;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            font-size: 16px;
+        }
+
+        /* 🎛️ FIXED BOTTOM ACTION BAR */
+        .selection-action-bar {
+            position: fixed;
+            bottom: -100px;
+            left: 260px;
+            right: 0;
+            background: white;
+            height: 70px;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+            transition: bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 99;
+        }
+
+        .selection-action-bar.active {
+            bottom: 0;
+        }
+
+        .selection-count {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .bulk-delete-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .bulk-delete-btn:hover {
+            background-color: #c0392b;
+        }
+
+        .cancel-selection-btn {
+            background: none;
+            border: none;
+            color: #7f8c8d;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-right: 15px;
+        }
+        
+        .cancel-selection-btn:hover {
+            color: #2c3e50;
+        }
+
+        /* Responsive breakdown for small screens */
+        @media(max-width: 1024px) {
+            .gallery-split-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>LOCCIM ADMIN</h2>
+    <a href="/dashboard">🏠 Dashboard</a>
+    <a href="/sermons" class="active">🎤 Sermons</a>
+    <a href="/prayers">🙏 Prayers</a>
+    <a href="/testimonies">💬 Testimonies</a>
+    <a href="/events">🗓️ Events</a>
+    <a href="/livestream">📹 Live Stream</a>
+    <a href="/gallery">🖼️ Gallery</a>
+    <a href="/logout" class="logout-btn">🚪 Logout</a>
+</div>
+
+<div class="main">
+    <h1>Media Gallery Management</h1>
+
+    <div class="management-section">
+        <h2>🖼️ Add New Media Item to Gallery Vault</h2>
+        <form id="uploadGalleryForm" enctype="multipart/form-data">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="title">Media Title</label>
+                    <input type="text" id="title" name="title" placeholder="e.g., Sunday Service Highlights" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="media_type">Media Type</label>
+                    <select id="media_type" name="media_type">
+                        <option value="image">📸 Image Picture</option>
+                        <option value="video">🎥 Mp4 Video Clip</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="file">Choose File(s)</label>
+                    <input type="file" id="file" name="file" accept="image/*,video/*" multiple required>
+                </div>
+
+                <button type="submit" class="action-btn">📤 Upload Items</button>
+            </div>
+        </form>
+    </div>
+
+    {% if gallery %}
+        <div class="gallery-split-container" id="galleryContainer">
+            
+            <div class="gallery-column" id="picturesColumn">
+                <h3>📸 Image Pictures</h3>
+                <div class="gallery-grid">
+                    {% set image_count = id | default(0) %}
+                    {% for item in gallery if item.media_type != 'video' %}
+                        <div class="gallery-item" id="gallery-card-{{ item.id }}" data-id="{{ item.id }}" onclick="toggleSelectCard(this, event)">
+                            <div class="media-preview-container">
+                                <span class="badge">📸 Image</span>
+                                <div class="select-checkbox-overlay">✓</div>
+                                <img src="{{ item.image_url }}" alt="{{ item.title }}">
+                            </div>
+                            <div class="gallery-info">
+                                <h4>{{ item.title or "Untitled Image" }}</h4>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    
+                    {# Display an inline placeholder notice if image loop yields empty results #}
+                    {% if gallery | selectattr("media_type", "equalto", "image") | list | length == 0 %}
+                        <div class="no-data">No pictures uploaded yet.</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="gallery-column" id="videosColumn">
+                <h3>🎥 Video Clips</h3>
+                <div class="gallery-grid">
+                    {% for item in gallery if item.media_type == 'video' %}
+                        <div class="gallery-item" id="gallery-card-{{ item.id }}" data-id="{{ item.id }}" onclick="toggleSelectCard(this, event)">
+                            <div class="media-preview-container">
+                                <span class="badge">🎥 Video</span>
+                                <div class="select-checkbox-overlay">✓</div>
+                                <video src="{{ item.image_url }}" controls muted preload="metadata"></video>
+                            </div>
+                            <div class="gallery-info">
+                                <h4>{{ item.title or "Untitled Video" }}</h4>
+                            </div>
+                        </div>
+                    {% endfor %}
+
+                    {# Display an inline placeholder notice if video loop yields empty results #}
+                    {% if gallery | selectattr("media_type", "equalto", "video") | list | length == 0 %}
+                        <div class="no-data">No video clips uploaded yet.</div>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+    {% else %}
+        <div id="galleryContainer">
+            <div class="empty-global-notice" id="emptyStateMessage">No items uploaded to the media vault yet.</div>
+        </div>
+    {% endif %}
+</div>
+
+<div class="selection-action-bar" id="selectionActionBar">
+    <div class="selection-count" id="selectionCountText">0 items selected</div>
+    <div style="display: flex; align-items: center;">
+        <button class="cancel-selection-btn" onclick="clearAllSelections()">Cancel</button>
+        <button class="bulk-delete-btn" onclick="deleteSelectedItems()">🗑️ Delete Selected</button>
+    </div>
+</div>
+
+<script>
+    let selectedItemIds = [];
+
+    function toggleSelectCard(cardElement, event) {
+        if (event.target.tagName.toLowerCase() === 'video') {
+            return;
+        }
+
+        const itemId = cardElement.getAttribute('data-id');
+        
+        if (cardElement.classList.contains('selected')) {
+            cardElement.classList.remove('selected');
+            selectedItemIds = selectedItemIds.filter(id => id !== itemId);
+        } else {
+            cardElement.classList.add('selected');
+            selectedItemIds.push(itemId);
+        }
+        
+        updateActionBarUi();
+    }
+
+    function updateActionBarUi() {
+        const actionBar = document.getElementById("selectionActionBar");
+        const countText = document.getElementById("selectionCountText");
+        
+        if (selectedItemIds.length > 0) {
+            countText.innerText = `${selectedItemIds.length} item${selectedItemIds.length > 1 ? 's' : ''} selected`;
+            actionBar.classList.add("active");
+        } else {
+            actionBar.classList.remove("active");
+        }
+    }
+
+    function clearAllSelections() {
+        document.querySelectorAll('.gallery-item.selected').forEach(card => {
+            card.classList.remove('selected');
+        });
+        selectedItemIds = [];
+        updateActionBarUi();
+    }
+
+    function deleteSelectedItems() {
+        if (selectedItemIds.length === 0) return;
+        
+        const confirmationMessage = `Are you entirely sure you want to permanently delete these ${selectedItemIds.length} media items?`;
+        if (!confirm(confirmationMessage)) return;
+
+        const deletePromises = selectedItemIds.map(itemId => {
+            return fetch(`/delete_gallery/${itemId}`, { method: "DELETE" })
+                .then(res => res.json())
+                .then(data => ({ id: itemId, success: data.success }))
+                .catch(err => ({ id: itemId, success: false, error: err }));
+        });
+
+        Promise.all(deletePromises).then(results => {
+            let successfullyDeletedCount = 0;
+            
+            results.forEach(result => {
+                if (result.success) {
+                    successfullyDeletedCount++;
+                    const card = document.getElementById(`gallery-card-${result.id}`);
+                    if (card) {
+                        card.style.transform = "scale(0.8)";
+                        card.style.opacity = "0";
+                        setTimeout(() => {
+                            const columnGrid = card.parentElement;
+                            card.remove();
+                            
+                            // Check if a specific grid column is now entirely empty of items
+                            if (columnGrid && columnGrid.querySelectorAll('.gallery-item').length === 0) {
+                                columnGrid.innerHTML = '<div class="no-data">No items remaining in this category.</div>';
+                            }
+                        }, 250);
+                    }
+                }
+            });
+
+            setTimeout(() => {
+                selectedItemIds = [];
+                updateActionBarUi();
+                
+                const remainingItems = document.querySelectorAll(".gallery-item");
+                if (remainingItems.length === 0) {
+                    document.getElementById("galleryContainer").innerHTML = '<div class="empty-global-notice" id="emptyStateMessage">No items uploaded to the media vault yet.</div>';
+                }
+                alert(`Successfully processed file removals! Removed ${successfullyDeletedCount} files.`);
+            }, 300);
+        });
+    }
+
+    // 📤 HANDLE ASYNCHRONOUS MULTI-FILE UPLOAD
+    document.getElementById("uploadGalleryForm").addEventListener("submit", function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const uploadBtn = document.querySelector(".action-btn");
+        
+        uploadBtn.disabled = true;
+        uploadBtn.innerText = "Processing Files...";
+
+        fetch("/upload_gallery", {
+            method: "POST",
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert("All selected media items deployed successfully!");
+                window.location.reload();
+            } else {
+                alert("Error: " + (data.error || "Upload failed."));
+                uploadBtn.disabled = false;
+                uploadBtn.innerText = "📤 Upload Items";
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Network breakdown processing upload data.");
+            uploadBtn.disabled = false;
+            uploadBtn.innerText = "📤 Upload Items";
+        });
+    });
+</script>
+
+</body>
+</html>

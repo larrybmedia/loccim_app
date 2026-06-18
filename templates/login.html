@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LOCCIM Admin Login</title>
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #4b0082, #00008b); display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .box { background: white; padding: 35px; border-radius: 12px; width: 340px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3); text-align: center; }
+        h2 { margin-bottom: 25px; color: #333; font-weight: 600; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+        button { width: 100%; padding: 12px; background: #4b0082; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 15px; }
+        button:hover { background: #3a0066; }
+        .error { background: #ffdddd; color: #a70000; padding: 10px; border-radius: 6px; margin-bottom: 10px; font-size: 13px; }
+        
+        .back-link {
+            display: block;
+            margin-top: 15px;
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .back-link:hover {
+            color: #4b0082;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="box">
+        <h2>LOCCIM Admin</h2>
+
+        {% if error %}
+            <div class="error">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        <form id="loginForm">
+            <input type="text" id="username" placeholder="Username" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <button type="submit">Login</button>
+        </form>
+
+        <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('http://10.1.1.9:5001/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username,
+                        password
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success === true) {
+                    localStorage.setItem('token', result.token);
+                    localStorage.setItem('username', result.username);
+
+                    window.location.href = '/dashboard';
+                } else {
+                    alert("Login Failed: " + (result.error || "Invalid credentials"));
+                }
+
+            } catch (err) {
+                console.error(err);
+                alert("Network error: " + err.message);
+            }
+        });
+        </script>
+
+        <a href="#"
+          onclick="window.parent.postMessage({action: 'goHome'}, '*'); return false;"
+          class="back-link">
+            &larr; Back to Home
+        </a>
+    </div>
+</body>
+</html>

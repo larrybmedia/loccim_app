@@ -1,0 +1,317 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LOCCIM - Live Stream Configurations</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f9;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* 🚪 SIDEBAR MENU STYLING */
+        .sidebar {
+            width: 260px;
+            background-color: #4b0082;
+            color: white;
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+            z-index: 100;
+        }
+
+        .sidebar h2 {
+            font-size: 20px;
+            margin-bottom: 25px;
+            text-align: center;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 15px;
+        }
+
+        .sidebar a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar a:hover, .sidebar a.active {
+            background-color: rgba(255, 255, 255, 0.15);
+            color: white;
+        }
+
+        .sidebar a.logout-btn {
+            margin-top: auto;
+            background-color: #e74c3c;
+            color: white;
+            text-align: center;
+            justify-content: center;
+        }
+
+        .sidebar a.logout-btn:hover {
+            background-color: #c0392b;
+        }
+
+        /* 🖥️ MAIN WORKSPACE PANEL STYLING */
+        .main {
+            margin-left: 260px;
+            padding: 40px;
+            flex-grow: 1;
+        }
+
+        .main h1 {
+            color: #2c3e50;
+            font-size: 28px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 15px;
+        }
+
+        /* 🟢 SUCCESS ALERT BANNER STYLING */
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            padding: 14px 20px;
+            border-radius: 6px;
+            margin-bottom: 25px;
+            font-size: 15px;
+            font-weight: 600;
+            box-shadow: 0 2px 6px rgba(21, 87, 36, 0.08);
+        }
+
+        /* 📤 FORM SECTIONS CONTAINER */
+        .management-section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border-top: 4px solid #4b0082;
+            margin-bottom: 35px;
+        }
+
+        .management-section h2 {
+            font-size: 18px;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .instruction-box {
+            background-color: #e8f4fd;
+            border-left: 4px solid #1da1f2;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 25px;
+            font-size: 14px;
+            color: #2c3e50;
+            line-height: 1.5;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .form-grid {
+                grid-template-columns: 3fr 1fr;
+                align-items: flex-end;
+            }
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #7f8c8d;
+            text-transform: uppercase;
+        }
+
+        .form-group input {
+            padding: 11px 14px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+            width: 100%;
+        }
+
+        .form-group input:focus {
+            border-color: #4b0082;
+        }
+
+        .action-btn {
+            background-color: #4b0082;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            height: 40px;
+        }
+
+        .action-btn:hover {
+            background-color: #360062;
+        }
+
+        h3.section-title {
+            color: #2c3e50;
+            font-size: 18px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        /* 📋 ACTIVE STREAM CARD PRESENTATION */
+        .status-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid #2ecc71;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .status-card.inactive {
+            border-left-color: #95a5a6;
+        }
+
+        .status-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #2ecc71;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-card.inactive .status-header {
+            color: #7f8c8d;
+        }
+
+        .url-display {
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 12px 16px;
+            border-radius: 6px;
+            color: #c7254e;
+            word-break: break-all;
+            border: 1px solid #eef1f6;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>LOCCIM ADMIN</h2>
+    <a href="/dashboard">🏠 Dashboard</a>
+    <a href="/sermons">🎤 Sermons</a>
+    <a href="/prayers">🙏 Prayers</a>
+    <a href="/testimonies">💬 Testimonies</a>
+    <a href="/events">🗓️ Events</a>
+    <a href="/livestream" class="active">📹 Live Stream</a>
+    <a href="/gallery">🖼️ Gallery</a>
+    <a href="/logout" class="logout-btn">🚪 Logout</a>
+</div>
+
+<div class="main">
+    <h1>Live Stream Settings</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert-success">
+               ✅ {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- 📹 CONFIGURATION FORM SECTION -->
+    <div class="management-section">
+        <h2>📹 Broadcaster Target Endpoints</h2>
+        
+        <div class="instruction-box">
+            <strong>💡 Production Guide:</strong> Paste the complete share link from your YouTube Live control room dashboard channel. The system will parse the source key dynamically so your Android and iOS mobile app instances can watch it seamlessly.
+        </div>
+
+        <form action="/api/set_live" method="POST">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="stream-url">YouTube Live Broadcast URL</label>
+                    <!-- 🛠️ BUGFIXED: Changed type from "url" to "text" to support loose string pastes without triggering browser-side blocks -->
+                    <input 
+                        type="text" 
+                        id="stream-url" 
+                        name="live_url" 
+                        placeholder="https://www.youtube.com/watch?v=..." 
+                        value="{{ current_url if current_url else '' }}"
+                        required
+                    >
+                </div>
+                
+                <button type="submit" class="action-btn">🔄 Update Broadcast Link</button>
+            </div>
+        </form>
+    </div>
+
+    <h3 class="section-title">Current Engine Runtime Registry</h3>
+
+    <!-- 📋 FEEDBACK DEPLOYMENT OVERVIEW -->
+    {% if current_url %}
+    <div class="status-card">
+        <div class="status-header">🟢 Live Link Route Hooked</div>
+        <div class="url-display">{{ current_url }}</div>
+    </div>
+    {% else %}
+    <div class="status-card inactive">
+        <div class="status-header">⚪ No Broadcast Target Active</div>
+        <div class="url-display" style="color: #7f8c8d; font-style: italic;">Mobile app pipeline currently down or unlinked.</div>
+    </div>
+    {% endif %}
+</div>
+
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LOCCIM - Live Stream Configurations</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f9;
+            color: #333;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 15px;
+        }
+
+        .back-btn {
+            text-decoration: none;
+            color: #4b0082;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        h2 {
+            color: #4b0082;
+            font-size: 28px;
+        }
+
+        .config-card {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .instruction-box {
+            background-color: #e8f4fd;
+            border-left: 4px solid #1da1f2;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 25px;
+            font-size: 14px;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #555;
+        }
+
+        input[type="url"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 15px;
+            transition: border-color 0.2s;
+        }
+
+        input[type="url"]:focus {
+            outline: none;
+            border-color: #4b0082;
+        }
+
+        .btn {
+            width: 100%;
+            background-color: #4b0082;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background-color: #3a0066;
+        }
+
+        .current-stream-info {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px dashed #ccc;
+            font-size: 14px;
+        }
+
+        .current-stream-info span {
+            font-family: monospace;
+            background: #eee;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #c7254e;
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>LOCCIM ADMIN</h2>
+    <a href="/dashboard">🏠 Dashboard</a>
+    <a href="/sermons">🎤 Sermons</a>
+    <a href="/prayers">🙏 Prayers</a>
+    <a href="/testimonies">💬 Testimonies</a>
+    <a href="/events">🗓️ Events</a>
+    <a href="/livestream" class="active">📹 Live Stream</a>
+    <a href="/gallery" class="active">🖼️ Gallery</a>
+    <a href="/logout" class="logout-btn">🚪 Logout</a>
+</div>
+
+<div class="container">
+    <div class="header-area">
+        <h2>📹 Live Stream Settings</h2>
+        <a href="/dashboard" class="back-btn">🏠 Back to Dashboard</a>
+    </div>
+
+    <div class="config-card">
+        <div class="instruction-box">
+            <strong>💡 Production Guide:</strong> Paste the complete share link from your YouTube Live control room dashboard channel. The system will parse the source key dynamically so your Android and iOS mobile app instances can watch it seamlessly.
+        </div>
+
+        <form action="/api/set_live" method="POST">
+            <div class="form-group">
+                <label for="stream-url">YouTube Live Broadcast URL</label>
+                <input 
+                    type="url" 
+                    id="stream-url" 
+                    name="url" 
+                    placeholder="https://www.youtube.com/watch?v=..." 
+                    value="{{ current_url if current_url else '' }}"
+                    required
+                >
+            </div>
+            
+            <button type="submit" class="btn">Update Broadcast Link</button>
+        </form>
+
+        {% if current_url %}
+        <div class="current-stream-info">
+            🟢 Active Live Stream Path: <span>{{ current_url }}</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+</body>
+</html>

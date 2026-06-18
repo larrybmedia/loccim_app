@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LOCCIM - Manage Church Events</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f9;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* 🚪 SIDEBAR MENU STYLING */
+        .sidebar {
+            width: 260px;
+            background-color: #4b0082;
+            color: white;
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+            z-index: 100;
+        }
+
+        .sidebar h2 {
+            font-size: 20px;
+            margin-bottom: 25px;
+            text-align: center;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 15px;
+        }
+
+        .sidebar a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar a:hover, .sidebar a.active {
+            background-color: rgba(255, 255, 255, 0.15);
+            color: white;
+        }
+
+        .sidebar a.logout-btn {
+            margin-top: auto;
+            background-color: #e74c3c;
+            color: white;
+            text-align: center;
+            justify-content: center;
+        }
+
+        .sidebar a.logout-btn:hover {
+            background-color: #c0392b;
+        }
+
+        /* 🖥️ MAIN WORKSPACE PANEL STYLING */
+        .main {
+            margin-left: 260px;
+            padding: 40px;
+            flex-grow: 1;
+        }
+
+        .main h1 {
+            color: #2c3e50;
+            font-size: 28px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 15px;
+        }
+
+        /* 🟢 SUCCESS ALERT BANNER STYLING */
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            padding: 14px 20px;
+            border-radius: 6px;
+            margin-bottom: 25px;
+            font-size: 15px;
+            font-weight: 600;
+            box-shadow: 0 2px 6px rgba(21, 87, 36, 0.08);
+        }
+
+        /* 📤 FORM SECTIONS CONTAINER */
+        .management-section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border-top: 4px solid #4b0082;
+            margin-bottom: 35px;
+        }
+
+        .management-section h2 {
+            font-size: 18px;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            align-items: flex-end;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #7f8c8d;
+            text-transform: uppercase;
+        }
+
+        .form-group input {
+            padding: 10px 14px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            border-color: #4b0082;
+        }
+
+        /* Styling specifically for file selector */
+        .form-group input[type="file"] {
+            padding: 7px;
+            background: #fafafa;
+            cursor: pointer;
+        }
+
+        .action-btn {
+            background-color: #4b0082;
+            color: white;
+            border: none;
+            padding: 11px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .action-btn:hover {
+            background-color: #360062;
+        }
+
+        h3.section-title {
+            color: #2c3e50;
+            font-size: 18px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        /* 🖼️ CARDS PRESENTATION GRID */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .gallery-item {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+        }
+
+        .media-preview-container {
+            width: 100%;
+            height: 180px;
+            background-color: #eef1f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .media-preview-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(75, 0, 130, 0.85);
+            color: white;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .gallery-info {
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-grow: 1;
+            justify-content: space-between;
+        }
+
+        .gallery-info h4 {
+            color: #2c3e50;
+            font-size: 16px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .event-meta {
+            font-size: 13px;
+            color: #7f8c8d;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 5px;
+        }
+
+        .event-meta span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .delete-btn {
+            background-color: #fff;
+            color: #e74c3c;
+            border: 1px solid #e74c3c;
+            padding: 8px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        .delete-btn:hover {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .no-data {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 50px;
+            color: #7f8c8d;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            font-size: 16px;
+        }
+
+        .no-image-text {
+            font-size: 13px;
+            color: #95a5a6;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>LOCCIM ADMIN</h2>
+    <a href="/dashboard">🏠 Dashboard</a>
+    <a href="/sermons" class="active">🎤 Sermons</a>
+    <a href="/prayers">🙏 Prayers</a>
+    <a href="/testimonies">💬 Testimonies</a>
+    <a href="/events">🗓️ Events</a>
+    <a href="/livestream">📹 Live Stream</a>
+    <a href="/gallery">🖼️ Gallery</a>
+    <a href="/logout" class="logout-btn">🚪 Logout</a>
+</div>
+
+<div class="main">
+    <h1>Events Management</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert-success">
+               ✅ {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="management-section">
+        <h2>🗓️ Schedule New Church Event</h2>
+        <form action="{{ url_for('add_event') }}" method="POST" enctype="multipart/form-data">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="title">Event Title</label>
+                    <input type="text" id="title" name="title" placeholder="e.g., Youth Summit" required>
+                </div>
+                <div class="form-group">
+                    <label for="date">Event Date</label>
+                    <input type="date" id="date" name="date" required>
+                </div>
+                <div class="form-group">
+                    <label for="location">Location</label>
+                    <input type="text" id="location" name="location" placeholder="e.g., Main Auditorium" required>
+                </div>
+                <div class="form-group">
+                    <label for="image">Event Flyer / Picture</label>
+                    <input type="file" id="image" name="image" accept="image/*">
+                </div>
+                
+                <button type="submit" class="action-btn">🚀 Add New Event</button>
+            </div>
+        </form>
+    </div>
+
+    <h3 class="section-title">Upcoming Scheduled Events</h3>
+    
+    <div class="gallery-grid" id="eventsContainer">
+        {% if events %}
+            {% for e in events %}
+                <div class="gallery-item" id="event-row-{{ e.id }}">
+                    <div class="media-preview-container">
+                        <span class="badge">📅 Event</span>
+                        {% if e.image_url %}
+                            <img src="{{ e.image_url }}" alt="{{ e.title }}">
+                        {% else %}
+                            <span class="no-image-text">🖼️ No Flyer Uploaded</span>
+                        {% endif %}
+                    </div>
+                    <div class="gallery-info">
+                        <h4>{{ e.title }}</h4>
+                        <div class="event-meta">
+                            <span>📅 {{ e.date }}</span>
+                            <span>📍 {{ e.location }}</span>
+                        </div>
+                        <button class="delete-btn" onclick="deleteEvent('{{ e.id }}')">🗑️ Delete Event</button>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-data" id="emptyStateMessage">No church events added yet. Fill out the form above to deploy calendar updates.</div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function deleteEvent(eventId) {
+    if (confirm("Are you sure you want to permanently delete this church event?")) {
+        fetch(`/delete_event/${eventId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const card = document.getElementById(`event-row-${eventId}`);
+                if (card) {
+                    card.style.transform = "scale(0.8)";
+                    card.style.opacity = "0";
+                    setTimeout(() => {
+                        card.remove();
+                        const remainingItems = document.querySelectorAll(".gallery-item");
+                        if (remainingItems.length === 0) {
+                            document.getElementById("eventsContainer").innerHTML = '<div class="no-data" id="emptyStateMessage">No church events added yet. Fill out the form above to deploy calendar updates.</div>';
+                        }
+                    }, 250);
+                }
+            } else {
+                alert("Error: " + (data.error || "Could not delete event."));
+            }
+        })
+        .catch(error => {
+            console.error("Error encountered:", error);
+            alert("An error occurred while connecting to the server.");
+        });
+    }
+}
+</script>
+
+</body>
+</html>
