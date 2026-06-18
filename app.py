@@ -797,6 +797,14 @@ def register_routes(app):
     def uploads(filename):
         return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
+    @app.route("/api/version")
+    def get_version():
+        return jsonify({
+            "version": "1.0.1",
+            "download_url": "https://your-site.com/downloads/app-latest.apk",
+            "force_update": False
+        })
+
 
 def create_default_admin():
     if not User.query.filter_by(username="admin").first():
