@@ -72,12 +72,16 @@ def create_app():
     # Global CORS policy
     # The 'origins' must match your exact frontend address (or use a list)
     # Change this in create_app() to see if it fixes the fetch error
-    CORS(app, resources={r"/api/*": {
-        "origins": [
-            "https://loccim-frontend.onrender.com",
-            "https://loccim-app-1.onrender.com"
-        ]
-    }})
+    CORS(
+    app,
+    resources={
+        r"/*": {
+            "origins": [
+                "https://loccim-frontend.onrender.com"
+            ]
+        }
+    }
+)
 
     db.init_app(app)
     # Initialize socketio with eventlet mode
@@ -424,14 +428,19 @@ def register_routes(app):
     
     @app.route("/api/gallery")
     def api_gallery():
+
+        BASE_URL = "https://loccim-app-1.onrender.com"
+
         items = Gallery.query.all()
+
         return jsonify([
             {
-                "id": i.id, 
-                "title": i.title, 
-                "image_url": i.image_url, 
+                "id": i.id,
+                "title": i.title,
+                "image_url": f"{BASE_URL}{i.image_url}",
                 "media_type": i.media_type
-            } for i in items
+            }
+            for i in items
         ])
     
     @app.route("/api/live")
