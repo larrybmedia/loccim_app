@@ -34,8 +34,8 @@ class Config:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     UPLOAD_FOLDER = 'static/uploads'
     # ADD THESE FOR SESSION PERSISTENCE
-    SESSION_COOKIE_SAMESITE = 'Lax' 
-    SESSION_COOKIE_SECURE = False 
+    SESSION_COOKIE_SAMESITE = 'None' 
+    SESSION_COOKIE_SECURE = True 
 
 # =========================
 # LOGIN DECORATOR
@@ -54,7 +54,6 @@ def login_required(f):
 # =========================
 def create_app():
     app = Flask(__name__)
-    app.secret_key = 'your_secret_key_here' # You can put any random string here
     app.config.from_object(Config)
     app.config["UPLOAD_FOLDER"] = os.path.join("static", "uploads")
 
@@ -64,19 +63,15 @@ def create_app():
     # Global CORS policy
     # The 'origins' must match your exact frontend address (or use a list)
     # Change this in create_app() to see if it fixes the fetch error
-    CORS(
-    app,
-    origins=["http://localhost:*", "http://127.0.0.1:*", "http://10.1.1.9:*"],
-    supports_credentials=True
-)
+    CORS(app, resources={r"/api/*": {"origins": "https://loccim-app-1.onrender.com"}})
 
     db.init_app(app)
     # Initialize socketio with eventlet mode
-    socketio.init_app(app, cors_allowed_origins="*", async_mode=None)
+    socketio.init_app(app, cors_allowed_origins="https://loccim-app-1.onrender.com")
 
     @app.after_request
     def security_headers(response):
-        response.headers["Content-Security-Policy"] = "frame-ancestors 'self' http://10.1.1.9:8080;"
+        response.headers["Content-Security-Policy"] = "frame-ancestors 'self' https://loccim-app-1.onrender.com;"
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-XSS-Protection"] = "1; mode=block"
         return response
@@ -261,6 +256,29 @@ def register_routes(app):
             total_stream_views=0,
             app_downloads=0
         )
+
+    @app.route("/create_admin")
+    def create_admin():
+        if not User.query.filter_by(username="admin").first():
+            admin = User(
+                username="admin",
+                password=generate_password_hash("admin1234"),
+                role="admin"
+            )
+
+            db.session.add(admin)
+            db.session.commit()
+
+        return "Admin created"
+
+    @app.route("/check_admin")
+    def check_admin():
+        user = User.query.filter_by(username="admin").first()
+
+        if user:
+            return "Admin exists"
+
+        return "Admin missing"
     
     @app.route('/sermons')
     def manage_sermons():
