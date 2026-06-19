@@ -1,6 +1,4 @@
-﻿import eventlet
-import eventlet.wsgi
-import os
+﻿import os
 from datetime import datetime
 from functools import wraps
 
@@ -74,7 +72,12 @@ def create_app():
     # Global CORS policy
     # The 'origins' must match your exact frontend address (or use a list)
     # Change this in create_app() to see if it fixes the fetch error
-    CORS(app, resources={r"/api/*": {"origins": "https://loccim-app-1.onrender.com"}})
+    CORS(app, resources={r"/api/*": {
+        "origins": [
+            "https://loccim-frontend.onrender.com",
+            "https://loccim-app-1.onrender.com"
+        ]
+    }})
 
     db.init_app(app)
     # Initialize socketio with eventlet mode
@@ -731,6 +734,11 @@ def register_routes(app):
     @app.route("/api/books", methods=["GET"])
     def api_books():
 
+        BASE_URL = os.environ.get(
+            "BASE_URL",
+            "https://loccim-app.onrender.com"
+        )
+
         books = Book.query.order_by(Book.created_at.desc()).all()
 
         return jsonify([
@@ -738,7 +746,7 @@ def register_routes(app):
                 "id": book.id,
                 "title": book.title,
                 "price": book.price,
-                "cover_image": book.cover_image,
+                "cover_image": f"{BASE_URL}{book.cover_image}",
                 "author": book.author if hasattr(book, "author") else "Pastor Peter A. Olowoporoku"
             }
             for book in books
@@ -826,6 +834,10 @@ def register_routes(app):
     def uploads(filename):
         return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
+    @app.route('/static/uploads/<filename>')
+    def uploaded_file(filename):
+        return send_from_directory('static/uploads', filename)
+
     @app.route("/api/version")
     def get_version():
         return jsonify({
@@ -849,4 +861,4 @@ app = create_app()
 if __name__ == '__main__':
     # Disable debug mode for the socketio.run call to prevent the attribute error
     # You can still use the Flask 'debug' config if needed, but do not pass it to socketio.run
-    socketio.run(app, host='0.0.0.0', port=5001, debug=False)
+    socketio.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
