@@ -29,6 +29,17 @@ socketio = SocketIO()
 # =========================
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "loccim_secret")
+    
+    database_url = os.environ.get("DATABASE_URL")
+
+    if database_url and database_url.startswith("postgres://"):
+        database_url = database_url.replace(
+            "postgres://",
+            "postgresql://",
+            1
+        )
+
+    SQLALCHEMY_DATABASE_URI = database_url or "sqlite:///loccim.db"
     SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", "sqlite:///loccim.db")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
