@@ -745,7 +745,7 @@ def register_routes(app):
 
         BASE_URL = os.environ.get(
             "BASE_URL",
-            "https://loccim-app.onrender.com"
+            "https://loccim-app-1.onrender.com"
         )
 
         books = Book.query.order_by(Book.created_at.desc()).all()
@@ -786,8 +786,11 @@ def register_routes(app):
             )
         )
 
+        author = request.form.get("author")
+
         book = Book(
             title=title,
+            author=author,
             price=price,
             cover_image=f"/static/uploads/{filename}"
         )
