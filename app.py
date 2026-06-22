@@ -2,49 +2,48 @@
 from datetime import datetime
 from functools import wraps
 
-# Third-party framework imports
 from flask import (
     Flask, request, jsonify, session,
     redirect, url_for, render_template,
-    send_from_directory, flash  # Added flash
+    send_from_directory, flash
 )
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_socketio import disconnect
 from werkzeug.utils import secure_filename
+from flask_cors import cross_origin
 
 
 # =========================
 # EXTENSIONS
 # =========================
 db = SQLAlchemy()
-socketio = SocketIO()
+
+socketio = SocketIO(
+    cors_allowed_origins="*",
+    async_mode="threading"
+)
+
 
 # =========================
 # CONFIG
 # =========================
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "loccim_secret")
-    
+
     database_url = os.environ.get("DATABASE_URL")
 
     if database_url and database_url.startswith("postgres://"):
-        database_url = database_url.replace(
-            "postgres://",
-            "postgresql://",
-            1
-        )
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
 
     SQLALCHEMY_DATABASE_URI = database_url or "sqlite:///loccim.db"
-    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", "sqlite:///loccim.db")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    UPLOAD_FOLDER = 'static/uploads'
-    # ADD THESE FOR SESSION PERSISTENCE
-    SESSION_COOKIE_SAMESITE = 'None' 
-    SESSION_COOKIE_SECURE = True 
+
+    UPLOAD_FOLDER = "static/uploads"
+
+    SESSION_COOKIE_SAMESITE = "None"
+    SESSION_COOKIE_SECURE = True
 
 # =========================
 # LOGIN DECORATOR
@@ -64,34 +63,37 @@ def login_required(f):
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
-    app.config["UPLOAD_FOLDER"] = os.path.join("static", "uploads")
 
-    upload_path = app.config['UPLOAD_FOLDER']
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
-    # Global CORS policy
-    # The 'origins' must match your exact frontend address (or use a list)
-    # Change this in create_app() to see if it fixes the fetch error
+    # ✅ FIXED CORS (THIS IS YOUR MAIN ISSUE)
     CORS(
-    app,
-    resources={
-        r"/*": {
-            "origins": [
-                "https://loccim-frontend.onrender.com"
-            ]
-        }
-    }
-)
+        app,
+        resources={r"/*": {"origins": [
+            "http://localhost:*",
+            "https://loccim-frontend.onrender.com"
+        ]}},
+        supports_credentials=True
+    )
 
     db.init_app(app)
-    # Initialize socketio with eventlet mode
-    socketio.init_app(app, cors_allowed_origins="https://loccim-app-1.onrender.com")
+    socketio.init_app(
+        app,
+        cors_allowed_origins=[
+            "http://localhost:*",
+            "https://loccim-frontend.onrender.com"
+        ]
+    )
 
     @app.after_request
     def security_headers(response):
-        response.headers["Content-Security-Policy"] = "frame-ancestors 'self' https://loccim-app-1.onrender.com;"
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-XSS-Protection"] = "1; mode=block"
+
+        # ✅ FIX CORS headers for preflight
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
+        response.headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,DELETE,OPTIONS"
+
         return response
 
     register_routes(app)
@@ -101,6 +103,14 @@ def create_app():
         create_default_admin()
 
     return app
+
+
+# =========================
+# SOCKET FIX
+# =========================
+@socketio.on("connect")
+def on_connect():
+    print("Client connected")
 
 
 # =========================
@@ -429,7 +439,7 @@ def register_routes(app):
     @app.route("/api/gallery")
     def api_gallery():
 
-        BASE_URL = "https://loccim-app-1.onrender.com"
+        BASE_URL = "https://loccim-backend.onrender.com"
 
         items = Gallery.query.all()
 
@@ -455,13 +465,13 @@ def register_routes(app):
                 {
                     "name": "Prophet Adeniyi P. Olowoporoku",
                     "role": "General Overseer",
-                    "image": "https://your-render-app.onrender.com/static/images/go.jpg",
+                    "image": "https://loccim-backend.onrender.com/static/images/go.jpg",
                     "bio": "Founder and General Overseer of LOCCIM Ministries, called to raise end-time believers."
                 },
                 {
                     "name": "Pastor (Mrs) Olowoporoku",
                     "role": "Co-Pastor",
-                    "image": "https://your-render-app.onrender.com/static/images/mrs_go.jpg",
+                    "image": "https://loccim-backend.onrender.com/static/images/mrs_go.jpg",
                     "bio": "Co-pastor supporting the ministry with teaching, counseling, and women’s fellowship leadership."
                 }
             ],
@@ -776,7 +786,7 @@ def register_routes(app):
 
         BASE_URL = os.environ.get(
             "BASE_URL",
-            "https://loccim-app-1.onrender.com"
+            "https://loccim-backend.onrender.com"
         )
 
         books = Book.query.order_by(Book.created_at.desc()).all()
@@ -901,7 +911,9 @@ def create_default_admin():
 # =========================
 app = create_app()
 
-if __name__ == '__main__':
-    # Disable debug mode for the socketio.run call to prevent the attribute error
-    # You can still use the Flask 'debug' config if needed, but do not pass it to socketio.run
-    socketio.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+if __name__ == "__main__":
+    socketio.run(
+        app,
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 10000))
+    )
