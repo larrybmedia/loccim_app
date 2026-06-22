@@ -442,6 +442,37 @@ def register_routes(app):
             }
             for i in items
         ])
+
+    @app.route('/api/about', methods=['GET'])
+    def get_about():
+        return jsonify({
+            "ministry": {
+                "name": "LOCCIM Ministries",
+                "vision": "Raising kingdom-minded believers with strong spiritual identity and global impact."
+            },
+
+            "leadership": [
+                {
+                    "name": "Prophet Adeniyi P. Olowoporoku",
+                    "role": "General Overseer",
+                    "image": "https://your-render-app.onrender.com/static/images/go.jpg",
+                    "bio": "Founder and General Overseer of LOCCIM Ministries, called to raise end-time believers."
+                },
+                {
+                    "name": "Pastor (Mrs) Olowoporoku",
+                    "role": "Co-Pastor",
+                    "image": "https://your-render-app.onrender.com/static/images/mrs_go.jpg",
+                    "bio": "Co-pastor supporting the ministry with teaching, counseling, and women’s fellowship leadership."
+                }
+            ],
+
+            "contact": {
+                "address": "Mercy Camp, Abule-Oba Road, Makogi, Magboro, Ogun State",
+                "email": "loccim@gmail.com",
+                "phone": "08108647938",
+                "website": "www.loccim.com"
+            }
+        })
     
     @app.route("/api/live")
     def api_get_live():
