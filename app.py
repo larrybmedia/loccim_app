@@ -833,7 +833,7 @@ def register_routes(app):
             title=title,
             author=author,
             price=price,
-            cover_image=f"/asset/images/{filename}"
+            cover_image=f"/static/uploads/{filename}"
         )
 
         db.session.add(book)
