@@ -842,18 +842,6 @@ def register_routes(app):
 
         return redirect("/announcements")
     
-    @app.route('/api/announcements/<int:id>', methods=['DELETE'])
-    def delete_announcement(id):
-
-        announcement = Announcement.query.get_or_404(id)
-
-        db.session.delete(announcement)
-        db.session.commit()
-
-        return jsonify({
-            "success": True
-        })
-    
     @app.route("/admin/delete-announcement/<int:id>", methods=["POST"])
     @login_required
     def delete_announcement(id):
