@@ -764,25 +764,26 @@ def register_routes(app):
             "success": True
         })
 
-    @app.route('/api/announcements', methods=['POST'])
-    def create_announcement():
+    @app.route('/api/announcements')
+    def get_announcements():
 
-        data = request.get_json()
+        announcements = Announcement.query.order_by(
+            Announcement.created_at.desc()
+        ).all()
 
-        announcement = Announcement(
-            title=data.get("title"),
-            message=data.get("message"),
-            type=data.get("type", "Info"),
-            category=data.get("category", "General")
-        )
-
-        db.session.add(announcement)
-        db.session.commit()
-
-        return jsonify({
-            "success": True,
-            "message": "Announcement created"
-        })
+        return jsonify([
+            {
+                "id": a.id,
+                "title": a.title,
+                "message": a.message,
+                "type": a.type,
+                "category": a.category,
+                "flyer": a.flyer,
+                "video": a.video,
+                "created_at": a.created_at.strftime("%Y-%m-%d")
+            }
+            for a in announcements
+        ])
     
     @app.route('/announcements')
     @login_required
