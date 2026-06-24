@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LOCCIM - Announcements</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI', Arial, sans-serif;
+}
+
+body{
+    background:#f4f6f9;
+    display:flex;
+    min-height:100vh;
+}
+
+/* SIDEBAR */
+
+.sidebar{
+    width:260px;
+    background:#4b0082;
+    color:white;
+    padding:30px 20px;
+    position:fixed;
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+}
+
+.sidebar h2{
+    text-align:center;
+    margin-bottom:25px;
+    border-bottom:1px solid rgba(255,255,255,.2);
+    padding-bottom:15px;
+}
+
+.sidebar a{
+    color:rgba(255,255,255,.85);
+    text-decoration:none;
+    padding:12px 15px;
+    border-radius:6px;
+    margin-bottom:8px;
+    transition:.2s;
+}
+
+.sidebar a:hover,
+.sidebar a.active{
+    background:rgba(255,255,255,.15);
+    color:white;
+}
+
+.logout-btn{
+    margin-top:auto;
+    background:#e74c3c;
+    text-align:center;
+}
+
+.logout-btn:hover{
+    background:#c0392b;
+}
+
+/* MAIN */
+
+.main{
+    margin-left:260px;
+    width:100%;
+    padding:35px;
+}
+
+.page-title{
+    color:#2c3e50;
+    margin-bottom:25px;
+    border-bottom:2px solid #e0e0e0;
+    padding-bottom:15px;
+}
+
+/* FORM CARD */
+
+.card{
+    background:white;
+    padding:25px;
+    border-radius:10px;
+    box-shadow:0 4px 12px rgba(0,0,0,.05);
+    margin-bottom:25px;
+    border-top:4px solid #4b0082;
+}
+
+.card h3{
+    margin-bottom:15px;
+    color:#2c3e50;
+}
+
+.form-group{
+    margin-bottom:15px;
+}
+
+.form-group label{
+    display:block;
+    margin-bottom:6px;
+    font-size:13px;
+    font-weight:600;
+    color:#7f8c8d;
+}
+
+input,
+textarea,
+select{
+    width:100%;
+    padding:12px;
+    border:1px solid #ccc;
+    border-radius:6px;
+    outline:none;
+}
+
+input:focus,
+textarea:focus,
+select:focus{
+    border-color:#4b0082;
+}
+
+textarea{
+    min-height:120px;
+    resize:vertical;
+}
+
+button{
+    background:#4b0082;
+    color:white;
+    border:none;
+    padding:12px 20px;
+    border-radius:6px;
+    cursor:pointer;
+    font-weight:600;
+}
+
+button:hover{
+    background:#370061;
+}
+
+/* ANNOUNCEMENT LIST */
+
+.announcement-card{
+    background:white;
+    padding:20px;
+    border-radius:10px;
+    margin-bottom:15px;
+    box-shadow:0 2px 8px rgba(0,0,0,.05);
+    border-left:5px solid #4b0082;
+}
+
+.announcement-title{
+    font-size:18px;
+    font-weight:bold;
+    color:#2c3e50;
+    margin-bottom:8px;
+}
+
+.announcement-message{
+    color:#555;
+    margin-bottom:12px;
+    line-height:1.5;
+}
+
+.announcement-meta{
+    font-size:12px;
+    color:#888;
+}
+
+.empty-state{
+    background:white;
+    padding:30px;
+    text-align:center;
+    border-radius:10px;
+    color:#888;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+
+<div class="sidebar">
+
+    <h2>LOCCIM ADMIN</h2>
+
+    <a href="/dashboard">🏠 Dashboard</a>
+
+    <a href="/announcements" class="active">
+        📢 Announcements
+    </a>
+
+    <a href="/sermons">🎤 Sermons</a>
+
+    <a href="/prayers">🙏 Prayers</a>
+
+    <a href="/testimonies">💬 Testimonies</a>
+
+    <a href="/events">🗓️ Events</a>
+
+    <a href="/livestream">📹 Live Stream</a>
+
+    <a href="/gallery">🖼️ Gallery</a>
+
+    <a href="/logout" class="logout-btn">
+        🚪 Logout
+    </a>
+
+</div>
+
+<!-- MAIN -->
+
+<div class="main">
+
+    <h1 class="page-title">
+        📢 Church Announcements
+    </h1>
+
+    <!-- CREATE ANNOUNCEMENT -->
+
+    <div class="card">
+
+        <h3>Create New Announcement</h3>
+
+        <form method="POST" action="/admin/create-announcement">
+
+            <div class="form-group">
+                <label>Announcement Title</label>
+                <input
+                    type="text"
+                    name="title"
+                    placeholder="Enter announcement title"
+                    required>
+            </div>
+
+            <div class="form-group">
+                <label>Announcement Message</label>
+                <textarea
+                    name="message"
+                    placeholder="Enter announcement details"
+                    required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Type</label>
+                <input
+                    type="text"
+                    name="type"
+                    placeholder="e.g Service, Event, Notice"
+                    required>
+            </div>
+
+            <div class="form-group">
+                <label>Category</label>
+                <select name="category" required>
+                    <option value="General">General</option>
+                    <option value="Church">Church</option>
+                    <option value="Event">Event</option>
+                    <option value="Youth">Youth</option>
+                    <option value="Prayer">Prayer</option>
+                    <option value="Conference">Conference</option>
+                </select>
+            </div>
+
+            <button type="submit">
+                📢 Publish Announcement
+            </button>
+
+        </form>
+
+    </div>
+
+    <!-- LIST -->
+
+    <h2 style="margin-bottom:15px;">
+        Recent Announcements
+    </h2>
+
+    {% if announcements %}
+
+        {% for a in announcements %}
+
+        <div class="announcement-card">
+
+            <div class="announcement-title">
+                {{ a.title }}
+            </div>
+
+            <div class="announcement-message">
+                {{ a.message }}
+            </div>
+
+            <div class="announcement-meta">
+                {{ a.type }} |
+                {{ a.category }} |
+                {{ a.created_at }}
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+    {% else %}
+
+        <div class="empty-state">
+            No announcements have been published yet.
+        </div>
+
+    {% endif %}
+
+</div>
+
+</body>
+</html>

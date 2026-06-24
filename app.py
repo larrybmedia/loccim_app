@@ -1,4 +1,5 @@
 ﻿import os
+from extensions import db, migrate
 from datetime import datetime
 from functools import wraps
 
@@ -13,16 +14,20 @@ from flask_socketio import SocketIO
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from flask_cors import cross_origin
+from models import User, Announcement, Book, Sermon, PrayerRequest, Testimony, Event, Gallery, Settings, AuditLog
 
 
 # =========================
 # EXTENSIONS
 # =========================
-db = SQLAlchemy()
+app = Flask(__name__)
 
 socketio = SocketIO(
+    app,
     cors_allowed_origins="*",
-    async_mode="threading"
+    async_mode="threading",
+    logger=True,
+    engineio_logger=True
 )
 
 
@@ -61,7 +66,6 @@ def login_required(f):
 # APP FACTORY
 # =========================
 def create_app():
-    app = Flask(__name__)
     app.config.from_object(Config)
 
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
@@ -77,13 +81,12 @@ def create_app():
     )
 
     db.init_app(app)
+    migrate.init_app(app, db)
     socketio.init_app(
-        app,
-        cors_allowed_origins=[
-            "http://localhost:*",
-            "https://loccim-frontend.onrender.com"
-        ]
-    )
+    app,
+    cors_allowed_origins=["https://loccim-frontend.onrender.com"],
+    async_mode="threading"
+)
 
     @app.after_request
     def security_headers(response):
@@ -108,92 +111,10 @@ def create_app():
 # =========================
 # SOCKET FIX
 # =========================
-@socketio.on("connect")
-def on_connect():
-    print("Client connected")
 
-
-# =========================
-# MODELS
-# =========================
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(120), unique=True)
-    password = db.Column(db.String(300))
-    role = db.Column(db.String(50), default="admin")
-
-
-class Sermon(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-
-    title = db.Column(db.String(200), nullable=False)
-
-    notes = db.Column(db.Text)
-
-    audio_file_1 = db.Column(db.String(300))
-
-    audio_file_2 = db.Column(db.String(300))
-
-    created_at = db.Column(
-    db.DateTime,
-    default=datetime.utcnow
-)
-
-
-class Event(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200))
-    date = db.Column(db.String(100))
-    location = db.Column(db.String(200))
-    image_url = db.Column(db.String(500)) # ADD THIS LINE
-
-
-class Gallery(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    # 🛠️ UPDATED: Match the new columns you added via script
-    title = db.Column(db.String(200), default='Untitled Media')
-    image_url = db.Column(db.String(500))
-    media_type = db.Column(db.String(50), default='image')
-
-
-class PrayerRequest(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100))
-    message = db.Column(db.Text)
-    status = db.Column(db.String(50), default="Pending")
-
-
-class Testimony(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100))
-    message = db.Column(db.Text)
-    approved = db.Column(db.Boolean, default=False)
-
-class Book(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-
-    title = db.Column(db.String(255), nullable=False)
-
-    price = db.Column(db.String(50))
-
-    author = db.Column(
-        db.String(255),
-        default="Pastor Peter A. Olowoporoku"
-    )
-
-    cover_image = db.Column(
-        db.String(500),
-        nullable=False
-    )
-
-    created_at = db.Column(
-    db.DateTime,
-    default=datetime.utcnow
-)
-
-class Settings(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    live_url = db.Column(db.String(300))
+@socketio.on('disconnect')
+def handle_disconnect():
+    print("Client disconnected")
 
 
 @socketio.on("connect")
@@ -265,10 +186,16 @@ def register_routes(app):
 
         books = Book.query.order_by(Book.id.desc()).all()
 
+        announcements = Announcement.query.order_by(
+            Announcement.created_at.desc()
+        ).all()
+
         return render_template(
             "dashboard.html",
 
-            sermons=Sermon.query.order_by(Sermon.id.desc()).all(),
+            sermons=Sermon.query.order_by(
+                Sermon.id.desc()
+            ).all(),
 
             prayers=PrayerRequest.query.filter_by(
                 status="Pending"
@@ -279,6 +206,8 @@ def register_routes(app):
             ).all(),
 
             books=books,
+
+            announcements=announcements,
 
             live_youtube_views=0,
             total_stream_views=0,
@@ -842,6 +771,68 @@ def register_routes(app):
         return jsonify({
             "success": True
         })
+
+    @app.route('/api/announcements', methods=['POST'])
+    def create_announcement():
+
+        data = request.get_json()
+
+        announcement = Announcement(
+            title=data.get("title"),
+            message=data.get("message"),
+            category=data.get("category", "General"),
+            image_url=data.get("image_url")
+        )
+
+        db.session.add(announcement)
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Announcement created"
+        })
+    
+    @app.route('/announcements')
+    @login_required
+    def announcements_page():
+
+        announcements = Announcement.query\
+            .order_by(Announcement.created_at.desc())\
+            .all()
+
+        return render_template(
+            "announcements.html",
+            announcements=announcements
+        )
+
+    @app.route('/admin/create-announcement', methods=['POST'])
+    @login_required
+    def create_announcement_dashboard():
+
+        announcement = Announcement(
+            title=request.form["title"],
+            message=request.form["message"],
+            type=request.form["type"],
+            category=request.form["category"],
+            created_at=datetime.utcnow()
+        )
+
+        db.session.add(announcement)
+        db.session.commit()
+
+        return redirect("/announcements")
+    
+    @app.route('/api/announcements/<int:id>', methods=['DELETE'])
+    def delete_announcement(id):
+
+        announcement = Announcement.query.get_or_404(id)
+
+        db.session.delete(announcement)
+        db.session.commit()
+
+        return jsonify({
+            "success": True
+        })
     
     @app.route("/api/contact", methods=["POST"])
     def contact():
@@ -912,8 +903,4 @@ def create_default_admin():
 app = create_app()
 
 if __name__ == "__main__":
-    socketio.run(
-        app,
-        host="0.0.0.0",
-        port=int(os.environ.get("PORT", 10000))
-    )
+    socketio.run(app, host="0.0.0.0", port=10000)
