@@ -95,6 +95,10 @@ class Announcement(db.Model):
 
     category = db.Column(db.String(50))
 
+    flyer = db.Column(db.String(500))
+
+    video = db.Column(db.String(500))
+
     created_at = db.Column(
         db.DateTime,
         default=datetime.utcnow

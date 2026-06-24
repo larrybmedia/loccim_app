@@ -801,12 +801,45 @@ def register_routes(app):
     @login_required
     def create_announcement_dashboard():
 
+        flyer_path = None
+        video_path = None
+
+        flyer = request.files.get("flyer")
+        video = request.files.get("video")
+
+        if flyer and flyer.filename:
+
+            flyer_filename = secure_filename(flyer.filename)
+
+            flyer.save(
+                os.path.join(
+                    app.config["UPLOAD_FOLDER"],
+                    flyer_filename
+                )
+            )
+
+            flyer_path = f"/static/uploads/{flyer_filename}"
+
+        if video and video.filename:
+
+            video_filename = secure_filename(video.filename)
+
+            video.save(
+                os.path.join(
+                    app.config["UPLOAD_FOLDER"],
+                    video_filename
+                )
+            )
+
+            video_path = f"/static/uploads/{video_filename}"
+
         announcement = Announcement(
             title=request.form["title"],
             message=request.form["message"],
             type=request.form["type"],
             category=request.form["category"],
-            created_at=datetime.utcnow()
+            flyer=flyer_path,
+            video=video_path
         )
 
         db.session.add(announcement)
