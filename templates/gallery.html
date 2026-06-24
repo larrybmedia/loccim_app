@@ -472,6 +472,28 @@
                             </div>
                             <div class="gallery-info">
                                 <h4>{{ item.title or "Untitled Video" }}</h4>
+
+                                <form
+                                    action="/admin/delete-gallery/{{ item.id }}"
+                                    method="POST"
+                                    onsubmit="return confirm('Delete this video?');"
+                                    style="margin-top:10px;"
+                                >
+                                    <button
+                                        type="submit"
+                                        style="
+                                            background:#e74c3c;
+                                            color:white;
+                                            border:none;
+                                            padding:8px 12px;
+                                            border-radius:6px;
+                                            cursor:pointer;
+                                            width:100%;
+                                        "
+                                    >
+                                        🗑 Delete
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     {% endfor %}
@@ -498,27 +520,6 @@
         <button class="bulk-delete-btn" onclick="deleteSelectedItems()">🗑️ Delete Selected</button>
     </div>
 </div>
-
-<form
-    action="/admin/delete-gallery/{{ image.id }}"
-    method="POST"
-    onsubmit="return confirm('Delete this image?');"
->
-    <button
-        type="submit"
-        style="
-            background:#e74c3c;
-            color:white;
-            border:none;
-            padding:8px 14px;
-            border-radius:6px;
-            cursor:pointer;
-            margin-top:10px;
-        "
-    >
-        🗑 Delete
-    </button>
-</form>
 
 <script>
     let selectedItemIds = [];
