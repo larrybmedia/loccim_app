@@ -322,6 +322,27 @@ button:hover{
                 {{ a.created_at }}
             </div>
 
+            <form
+                action="/admin/delete-announcement/{{ a.id }}"
+                method="POST"
+                onsubmit="return confirm('Delete this announcement?');"
+                style="margin-top:10px;"
+            >
+                <button
+                    type="submit"
+                    style="
+                        background:#e74c3c;
+                        color:white;
+                        border:none;
+                        padding:8px 14px;
+                        border-radius:6px;
+                        cursor:pointer;
+                    "
+                >
+                    🗑 Delete
+                </button>
+            </form>
+
         </div>
 
         {% endfor %}

@@ -638,6 +638,17 @@ def register_routes(app):
         return jsonify({
             "success": True
         })
+    
+    @app.route("/admin/delete-gallery/<int:id>", methods=["POST"])
+    @login_required
+    def delete_gallery(id):
+        image = Gallery.query.get_or_404(id)
+
+        db.session.delete(image)
+        db.session.commit()
+
+        flash("Gallery item deleted successfully", "success")
+        return redirect("/gallery")
 
     @app.route("/delete_prayer/<int:id>", methods=["POST"])
     @login_required
@@ -860,6 +871,17 @@ def register_routes(app):
             "success": True
         })
     
+    @app.route("/admin/delete-announcement/<int:id>", methods=["POST"])
+    @login_required
+    def delete_announcement(id):
+        announcement = Announcement.query.get_or_404(id)
+
+        db.session.delete(announcement)
+        db.session.commit()
+
+        flash("Announcement deleted successfully", "success")
+        return redirect("/announcements")
+
     @app.route("/api/contact", methods=["POST"])
     def contact():
         data = request.get_json()
