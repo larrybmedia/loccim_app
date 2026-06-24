@@ -621,23 +621,6 @@ def register_routes(app):
             
         return redirect(url_for('sermons'))
 
-    @app.route("/delete_gallery/<int:id>", methods=["DELETE"])
-    @login_required
-    def delete_gallery(id):
-
-        item = Gallery.query.get(id)
-
-        if not item:
-            return jsonify({
-                "success": False
-            }), 404
-
-        db.session.delete(item)
-        db.session.commit()
-
-        return jsonify({
-            "success": True
-        })
     
     @app.route("/admin/delete-gallery/<int:id>", methods=["POST"])
     @login_required
