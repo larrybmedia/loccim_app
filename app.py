@@ -192,23 +192,15 @@ def register_routes(app):
 
         return render_template(
             "dashboard.html",
-
-            sermons=Sermon.query.order_by(
-                Sermon.id.desc()
-            ).all(),
-
+            sermons=Sermon.query.order_by(Sermon.id.desc()).all(),
             prayers=PrayerRequest.query.filter_by(
                 status="Pending"
             ).all(),
-
             testimonies=Testimony.query.order_by(
                 Testimony.id.desc()
             ).all(),
-
             books=books,
-
             announcements=announcements,
-
             live_youtube_views=0,
             total_stream_views=0,
             app_downloads=0
@@ -780,8 +772,8 @@ def register_routes(app):
         announcement = Announcement(
             title=data.get("title"),
             message=data.get("message"),
-            category=data.get("category", "General"),
-            image_url=data.get("image_url")
+            type=data.get("type", "Info"),
+            category=data.get("category", "General")
         )
 
         db.session.add(announcement)

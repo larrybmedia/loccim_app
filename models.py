@@ -86,9 +86,17 @@ class Book(db.Model):
 
 class Announcement(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+
     title = db.Column(db.String(200), nullable=False)
+
     message = db.Column(db.Text, nullable=False)
+
     type = db.Column(db.String(50))
+
     category = db.Column(db.String(50))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
     
