@@ -287,21 +287,25 @@ def register_routes(app):
     @app.route("/upload_sermon", methods=["POST"])
     @login_required
     def upload_sermon():
+
         title = request.form.get("title")
         notes = request.form.get("notes")
 
         audio1 = request.files.get("audio_file_1")
         audio2 = request.files.get("audio_file_2")
 
-        audio1_name = upload_to_cloudinary(audio1, "sermons")
-        audio2_name = upload_to_cloudinary(audio2, "sermons")
+        audio1_url = upload_to_cloudinary(audio1, "sermons") if audio1 else None
+        audio2_url = upload_to_cloudinary(audio2, "sermons") if audio2 else None
 
         sermon = Sermon(
             title=title,
             notes=notes,
-            audio_file_1=audio1_name,
-            audio_file_2=audio2_name
+            audio_file_1=audio1_url,
+            audio_file_2=audio2_url
         )
+
+        db.session.add(sermon)
+        db.session.commit()
 
         return redirect(url_for("manage_sermons"))
 
@@ -541,11 +545,9 @@ def register_routes(app):
         # 'image' MUST match the name="image" in your HTML
         if 'image' in request.files:
             file = request.files['image']
-            print(f"DEBUG: File received: {file.filename}")
             
             if file and file.filename != '':
                 image_url = upload_to_cloudinary(file, "events")
-                print(f"DEBUG: File saved at {save_path}")
         else:
             print("DEBUG: No file found in request.files")
 
@@ -776,37 +778,17 @@ def register_routes(app):
     @login_required
     def create_announcement_dashboard():
 
-        flyer_path = upload_to_cloudinary(flyer, "announcements")
-        video_path = upload_to_cloudinary(video, "announcements")
-
         flyer = request.files.get("flyer")
         video = request.files.get("video")
 
+        flyer_path = None
+        video_path = None
+
         if flyer and flyer.filename:
-
-            flyer_filename = secure_filename(flyer.filename)
-
-            flyer.save(
-                os.path.join(
-                    app.config["UPLOAD_FOLDER"],
-                    flyer_filename
-                )
-            )
-
-            flyer_path = f"/static/uploads/{flyer_filename}"
+            flyer_path = upload_to_cloudinary(flyer, "announcements")
 
         if video and video.filename:
-
-            video_filename = secure_filename(video.filename)
-
-            video.save(
-                os.path.join(
-                    app.config["UPLOAD_FOLDER"],
-                    video_filename
-                )
-            )
-
-            video_path = f"/static/uploads/{video_filename}"
+            video_path = upload_to_cloudinary(video, "announcements")
 
         announcement = Announcement(
             title=request.form["title"],
