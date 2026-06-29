@@ -57,11 +57,13 @@ def upload_to_cloudinary(file, folder):
     if not file or file.filename == "":
         return None
 
-    return cloudinary.uploader.upload(
+    result = cloudinary.uploader.upload(
         file,
         folder=f"LOCCIM/{folder}",
         resource_type="auto"
     )
+
+    return result["secure_url"]
 
 # =========================
 # LOGIN DECORATOR
@@ -299,11 +301,6 @@ def register_routes(app):
             notes=notes,
             audio_file_1=audio1_name,
             audio_file_2=audio2_name
-        )
-
-        cloudinary.uploader.destroy(
-            sermon.public_id,
-            resource_type="video"
         )
 
         return redirect(url_for("manage_sermons"))
@@ -714,6 +711,7 @@ def register_routes(app):
     def upload_book():
 
         title = request.form.get("title")
+        author = request.form.get("author")
         price = request.form.get("price")
 
         cover = request.files.get("cover")
@@ -722,7 +720,7 @@ def register_routes(app):
             return jsonify({
                 "success": False,
                 "error": "No cover image selected"
-            })
+            }), 400
 
         cover_url = upload_to_cloudinary(cover, "books")
 
@@ -733,13 +731,7 @@ def register_routes(app):
             cover_image=cover_url
         )
 
-        if book.public_id:
-            cloudinary.uploader.destroy(
-                book.public_id,
-                resource_type="image"
-            )
-
-        db.session.delete(book)
+        db.session.add(book)
         db.session.commit()
 
         return jsonify({
