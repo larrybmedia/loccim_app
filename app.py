@@ -2,6 +2,8 @@
 from extensions import db, migrate
 from datetime import datetime
 from functools import wraps
+import cloudinary
+import cloudinary.uploader
 
 from flask import (
     Flask, request, jsonify, session,
@@ -49,6 +51,17 @@ class Config:
 
     SESSION_COOKIE_SAMESITE = "None"
     SESSION_COOKIE_SECURE = True
+
+
+def upload_to_cloudinary(file, folder):
+    if not file or file.filename == "":
+        return None
+
+    return cloudinary.uploader.upload(
+        file,
+        folder=f"LOCCIM/{folder}",
+        resource_type="auto"
+    )
 
 # =========================
 # LOGIN DECORATOR
@@ -278,20 +291,8 @@ def register_routes(app):
         audio1 = request.files.get("audio_file_1")
         audio2 = request.files.get("audio_file_2")
 
-        audio1_name = None
-        audio2_name = None
-
-        if audio1 and audio1.filename:
-            audio1_name = audio1.filename
-            audio1.save(
-                os.path.join(app.config["UPLOAD_FOLDER"], audio1_name)
-            )
-
-        if audio2 and audio2.filename:
-            audio2_name = audio2.filename
-            audio2.save(
-                os.path.join(app.config["UPLOAD_FOLDER"], audio2_name)
-            )
+        audio1_name = upload_to_cloudinary(audio1, "sermons")
+        audio2_name = upload_to_cloudinary(audio2, "sermons")
 
         sermon = Sermon(
             title=title,
@@ -300,8 +301,10 @@ def register_routes(app):
             audio_file_2=audio2_name
         )
 
-        db.session.add(sermon)
-        db.session.commit()
+        cloudinary.uploader.destroy(
+            sermon.public_id,
+            resource_type="video"
+        )
 
         return redirect(url_for("manage_sermons"))
 
@@ -360,15 +363,13 @@ def register_routes(app):
     @app.route("/api/gallery")
     def api_gallery():
 
-        BASE_URL = "https://loccim-backend.onrender.com"
-
         items = Gallery.query.all()
 
         return jsonify([
             {
                 "id": i.id,
                 "title": i.title,
-                "image_url": f"{BASE_URL}{i.image_url}",
+                "image_url": i.image_url,
                 "media_type": i.media_type
             }
             for i in items
@@ -468,18 +469,12 @@ def register_routes(app):
         # 3. Process the files
         for file in files:
             if file and file.filename:
-                filename = secure_filename(file.filename)
-                # Ensure folder exists
-                os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-                
-                save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-                file.save(save_path)
-                
-                # 4. Create database entry
+                url = upload_to_cloudinary(file, "gallery")
+
                 gallery_item = Gallery(
                     title=title,
                     media_type=media_type,
-                    image_url=f"/static/uploads/{filename}"
+                    image_url=url
                 )
                 db.session.add(gallery_item)
                 uploaded_items.append(gallery_item)
@@ -552,11 +547,7 @@ def register_routes(app):
             print(f"DEBUG: File received: {file.filename}")
             
             if file and file.filename != '':
-                filename = secure_filename(file.filename)
-                save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                file.save(save_path)
-                # This path is what you store in the DB
-                image_url = f"/static/uploads/{filename}"
+                image_url = upload_to_cloudinary(file, "events")
                 print(f"DEBUG: File saved at {save_path}")
         else:
             print("DEBUG: No file found in request.files")
@@ -711,7 +702,7 @@ def register_routes(app):
                 "id": book.id,
                 "title": book.title,
                 "price": book.price,
-                "cover_image": f"{BASE_URL}{book.cover_image}",
+                "cover_image": book.cover_image,
                 "author": book.author if hasattr(book, "author") else "Pastor Peter A. Olowoporoku"
             }
             for book in books
@@ -733,25 +724,22 @@ def register_routes(app):
                 "error": "No cover image selected"
             })
 
-        filename = secure_filename(cover.filename)
-
-        cover.save(
-            os.path.join(
-                app.config["UPLOAD_FOLDER"],
-                filename
-            )
-        )
-
-        author = request.form.get("author")
+        cover_url = upload_to_cloudinary(cover, "books")
 
         book = Book(
             title=title,
             author=author,
             price=price,
-            cover_image=f"/static/uploads/{filename}"
+            cover_image=cover_url
         )
 
-        db.session.add(book)
+        if book.public_id:
+            cloudinary.uploader.destroy(
+                book.public_id,
+                resource_type="image"
+            )
+
+        db.session.delete(book)
         db.session.commit()
 
         return jsonify({
@@ -796,8 +784,8 @@ def register_routes(app):
     @login_required
     def create_announcement_dashboard():
 
-        flyer_path = None
-        video_path = None
+        flyer_path = upload_to_cloudinary(flyer, "announcements")
+        video_path = upload_to_cloudinary(video, "announcements")
 
         flyer = request.files.get("flyer")
         video = request.files.get("video")
