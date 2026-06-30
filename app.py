@@ -33,6 +33,14 @@ socketio = SocketIO(
 )
 
 
+# Configure Cloudinary
+cloudinary.config(
+    cloud_name=os.environ.get("dbj1ycdst"),
+    api_key=os.environ.get("469652681695626"),
+    api_secret=os.environ.get("4Dvk1ETZlqM0_bM7DqEpkaTkEZE"),
+    secure=True,
+)
+
 # =========================
 # CONFIG
 # =========================
@@ -46,8 +54,6 @@ class Config:
 
     SQLALCHEMY_DATABASE_URI = database_url or "sqlite:///loccim.db"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-
-    UPLOAD_FOLDER = "static/uploads"
 
     SESSION_COOKIE_SAMESITE = "None"
     SESSION_COOKIE_SECURE = True
@@ -82,8 +88,6 @@ def login_required(f):
 # =========================
 def create_app():
     app.config.from_object(Config)
-
-    os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
     # ✅ FIXED CORS (THIS IS YOUR MAIN ISSUE)
     CORS(
@@ -568,29 +572,31 @@ def register_routes(app):
    # Ensure the methods list explicitly includes 'DELETE'
     @app.route("/delete_event/<int:event_id>", methods=["DELETE"])
     def delete_event(event_id):
-        # Find the event
         event = Event.query.get(event_id)
-        
+
         if not event:
-            return jsonify({"success": False, "error": "Event not found"}), 404
-            
+            return jsonify({
+                "success": False,
+                "error": "Event not found"
+            }), 404
+
         try:
-            # 1. Delete associated image file if it exists
-            if event.image_url:
-                # Adjust pathing to match your server structure
-                file_path = os.path.join(app.root_path, event.image_url.lstrip('/'))
-                if os.path.exists(file_path):
-                    os.remove(file_path)
-            
-            # 2. Delete from database
+            # Delete the event from the database
             db.session.delete(event)
             db.session.commit()
-            
-            # 3. Return JSON response
-            return jsonify({"success": True}), 200
-            
+
+            return jsonify({
+                "success": True,
+                "message": "Event deleted successfully."
+            }), 200
+
         except Exception as e:
-            return jsonify({"success": False, "error": str(e)}), 500
+            db.session.rollback()
+
+            return jsonify({
+                "success": False,
+                "error": str(e)
+            }), 500
 
     # Update the route to specifically allow POST
     @app.route("/delete_sermon/<int:sermon_id>", methods=["POST"])
@@ -854,14 +860,6 @@ def register_routes(app):
         return jsonify({
             "success": True
         })
-
-    @app.route("/uploads/<filename>")
-    def uploads(filename):
-        return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
-
-    @app.route('/static/uploads/<filename>')
-    def uploaded_file(filename):
-        return send_from_directory('static/uploads', filename)
 
     @app.route("/api/version")
     def get_version():
