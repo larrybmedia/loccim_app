@@ -35,9 +35,9 @@ socketio = SocketIO(
 
 # Configure Cloudinary
 cloudinary.config(
-    cloud_name=os.environ.get("dbj1ycdst"),
-    api_key=os.environ.get("469652681695626"),
-    api_secret=os.environ.get("4Dvk1ETZlqM0_bM7DqEpkaTkEZE"),
+    cloud_name=os.environ.get("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.environ.get("CLOUDINARY_API_KEY"),
+    api_secret=os.environ.get("CLOUDINARY_API_SECRET"),
     secure=True,
 )
 
