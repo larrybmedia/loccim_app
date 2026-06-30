@@ -88,6 +88,7 @@ def login_required(f):
 # =========================
 def create_app():
     app.config.from_object(Config)
+    print("DATABASE URI:", app.config["SQLALCHEMY_DATABASE_URI"])
 
     # ✅ FIXED CORS (THIS IS YOUR MAIN ISSUE)
     CORS(
