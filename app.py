@@ -43,7 +43,7 @@ cloudinary.config(
 
 print("Cloud Name:", os.getenv("CLOUDINARY_CLOUD_NAME"))
 print("API Key:", os.getenv("CLOUDINARY_API_KEY"))
-print("API Secret:", "SET" if os.getenv("CLOUDINARY_API_SECRET") else "MISSING")
+print("API Secret exists:", os.getenv("CLOUDINARY_API_SECRET") is not None)
 
 # =========================
 # CONFIG
