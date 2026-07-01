@@ -283,6 +283,17 @@
             flex-grow: 1;
         }
 
+        .sermon-date{
+            display:inline-block;
+            margin-top:8px;
+            padding:5px 10px;
+            background:#f3f0ff;
+            color:#4b0082;
+            border-radius:20px;
+            font-size:13px;
+            font-weight:600;
+        }
+
         .media-flex-group {
             display: flex;
             flex-direction: column;
@@ -382,6 +393,15 @@
             <div class="form-group">
                 <label for="title">Sermon Title</label>
                 <input type="text" id="title" name="title" placeholder="Enter sermon topic or title" required>
+            </div>
+
+            <div class="form-group">
+                <label for="sermon_date">Sermon Date</label>
+                <input
+                    type="date"
+                    id="sermon_date"
+                    name="sermon_date"
+                    required>
             </div>
 
             <div class="form-group">

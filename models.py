@@ -14,14 +14,13 @@ class Sermon(db.Model):
 
     notes = db.Column(db.Text)
 
-    audio_file_1 = db.Column(db.String(300))
+    audio_url_1 = db.Column(db.String(500))
 
-    audio_file_2 = db.Column(db.String(300))
+    audio_url_2 = db.Column(db.String(500))
 
-    created_at = db.Column(
-    db.DateTime,
-    default=datetime.utcnow
-)
+    sermon_date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Event(db.Model):
     id = db.Column(db.Integer, primary_key=True)

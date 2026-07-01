@@ -289,6 +289,7 @@ def register_routes(app):
                 "notes": sermon.notes,
                 "audio_file_1": sermon.audio_file_1,
                 "audio_file_2": sermon.audio_file_2,
+                "sermon_date": sermon.sermon_date.strftime("%Y-%m-%d"),
             }
             for sermon in sermons
         ])
@@ -299,7 +300,7 @@ def register_routes(app):
 
         title = request.form.get("title")
         notes = request.form.get("notes")
-
+        sermon_date = request.form.get("sermon_date")
         audio1 = request.files.get("audio_file_1")
         audio2 = request.files.get("audio_file_2")
 
@@ -309,8 +310,9 @@ def register_routes(app):
         sermon = Sermon(
             title=title,
             notes=notes,
-            audio_file_1=audio1_url,
-            audio_file_2=audio2_url
+            audio_url_1=audio1_url,
+            audio_url_2=audio2_url,
+            sermon_date=sermon_date,
         )
 
         db.session.add(sermon)
