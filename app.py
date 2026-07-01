@@ -289,7 +289,8 @@ def register_routes(app):
                 "notes": sermon.notes,
                 "audio_file_1": sermon.audio_file_1,
                 "audio_file_2": sermon.audio_file_2,
-                "sermon_date": sermon.sermon_date.strftime("%Y-%m-%d"),
+                "sermon_date": sermon.sermon_date.strftime("%Y-%m-%d")
+                if sermon.sermon_date else None,
             }
             for sermon in sermons
         ])
@@ -310,8 +311,8 @@ def register_routes(app):
         sermon = Sermon(
             title=title,
             notes=notes,
-            audio_url_1=audio1_url,
-            audio_url_2=audio2_url,
+            audio_file_1=audio1_url,
+            audio_file_2=audio2_url,
             sermon_date=sermon_date,
         )
 

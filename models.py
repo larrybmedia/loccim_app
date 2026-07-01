@@ -14,9 +14,9 @@ class Sermon(db.Model):
 
     notes = db.Column(db.Text)
 
-    audio_url_1 = db.Column(db.String(500))
-
-    audio_url_2 = db.Column(db.String(500))
+    audio_file_1 = db.Column(db.String(500))
+    
+    audio_file_2 = db.Column(db.String(500))
 
     sermon_date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
 
