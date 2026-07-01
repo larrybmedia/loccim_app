@@ -287,8 +287,8 @@ def register_routes(app):
                 "id": sermon.id,
                 "title": sermon.title,
                 "notes": sermon.notes,
-                "audio_file_1": sermon.audio_file_1,
-                "audio_file_2": sermon.audio_file_2,
+                "audio_url_1": sermon.audio_url_1,
+                "audio_url_2": sermon.audio_url_2,
                 "sermon_date": sermon.sermon_date.strftime("%Y-%m-%d")
                 if sermon.sermon_date else None,
             }
@@ -311,9 +311,12 @@ def register_routes(app):
         sermon = Sermon(
             title=title,
             notes=notes,
-            audio_file_1=audio1_url,
-            audio_file_2=audio2_url,
-            sermon_date=datetime.strptime(sermon_date, "%Y-%m-%d").date(),
+            audio_url_1=audio1_url,
+            audio_url_2=audio2_url,
+            sermon_date=datetime.strptime(
+                sermon_date,
+                "%Y-%m-%d"
+            ).date(),
         )
 
         db.session.add(sermon)
