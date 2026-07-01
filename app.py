@@ -298,10 +298,10 @@ def register_routes(app):
     @app.route("/upload_sermon", methods=["POST"])
     @login_required
     def upload_sermon():
-
         title = request.form.get("title")
         notes = request.form.get("notes")
         sermon_date = request.form.get("sermon_date")
+
         audio1 = request.files.get("audio_file_1")
         audio2 = request.files.get("audio_file_2")
 
@@ -313,7 +313,7 @@ def register_routes(app):
             notes=notes,
             audio_file_1=audio1_url,
             audio_file_2=audio2_url,
-            sermon_date=sermon_date,
+            sermon_date=datetime.strptime(sermon_date, "%Y-%m-%d").date(),
         )
 
         db.session.add(sermon)
