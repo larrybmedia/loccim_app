@@ -618,20 +618,24 @@ def register_routes(app):
     @app.route("/delete_sermon/<int:sermon_id>", methods=["POST"])
     @login_required
     def delete_sermon(sermon_id):
-        sermon = db.session.get(Sermon, sermon_id) # Modern syntax
-        if not sermon:
+        sermon = db.session.get(Sermon, sermon_id)
+
+        if sermon is None:
             flash("Sermon not found.", "danger")
-            return redirect(url_for('sermons'))
-            
+            return redirect(url_for("sermons"))
+
         try:
-            # Add file deletion logic here
             db.session.delete(sermon)
             db.session.commit()
+
             flash("Sermon deleted successfully!", "success")
+
         except Exception as e:
-            flash(f"Error: {str(e)}", "danger")
-            
-        return redirect(url_for('sermons'))
+            db.session.rollback()          # <-- IMPORTANT
+            print("DELETE ERROR:", e)      # <-- Print to Render logs
+            flash(f"Error deleting sermon: {e}", "danger")
+
+        return redirect(url_for("sermons"))
 
     
     @app.route("/admin/delete-gallery/<int:id>", methods=["POST"])
