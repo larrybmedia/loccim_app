@@ -276,6 +276,11 @@ def register_routes(app):
         db.session.commit()
         return jsonify({"message": "Password updated successfully"})
         
+    def download_url(url):
+      if url:
+          return url.replace("/upload/", "/upload/fl_attachment/")
+      return None
+
     @app.route('/api/sermons')
     def api_sermons():
         print("=== API SERMONS ROUTE HIT ===")
@@ -287,8 +292,8 @@ def register_routes(app):
                 "id": sermon.id,
                 "title": sermon.title,
                 "notes": sermon.notes,
-                "audio_url_1": sermon.audio_url_1,
-                "audio_url_2": sermon.audio_url_2,
+                "audio_url_1": download_url(sermon.audio_url_1),
+                "audio_url_2": download_url(sermon.audio_url_2),
                 "sermon_date": sermon.sermon_date.strftime("%Y-%m-%d")
                 if sermon.sermon_date else None,
             }
