@@ -1,0 +1,68 @@
+name: loccim_app
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.0 # Updated from 3.12.0 (which was likely a typo or too high for stable)
+
+dependencies:
+  flutter:
+    sdk: flutter
+  just_audio: ^0.10.4
+  intl: ^0.20.2
+  dio: ^5.8.0+1
+  path_provider: ^2.1.5
+  permission_handler: ^12.0.1
+  open_filex: ^4.7.0
+  url_launcher: ^6.3.1
+
+  shared_preferences: ^2.2.3
+  cupertino_icons: ^1.0.8
+  youtube_player_flutter: ^10.0.1
+  http: ^1.6.0
+  fl_chart: ^1.2.0
+  socket_io_client: ^3.1.4
+  jwt_decoder: ^2.0.1
+  web: ^1.1.1
+  cached_network_image: ^3.3.1
+  video_player: ^2.10.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/logo.png
+    - assets/images/logo.png
+    - assets/images/banner.jpg
+    - assets/images/map.jpg
+    - assets/images/go.jpg
+    - assets/images/mrs_go.jpg
+    - assets/images/contact_bg.jpg
+    - assets/images/church_background.jpg
+    - assets/images/book1.jpg
+    - assets/images/aa.jpg
+    - assets/images/os.jpg
+    - assets/images/ab.jpg
+    - assets/images/ao.jpg
+    - assets/images/af.jpg
+    - assets/images/aj.jpg
+    - assets/images/ba.jpg
+    - assets/images/ad.jpg
+    - assets/images/ap.jpg
+    - assets/images/ep.jpg
+    - assets/images/fl.jpg
+    - assets/images/jo.jpg
+    - assets/images/kd.jpg
+    - assets/images/ko.jpg
+    - assets/images/od.jpg
+    - assets/images/ol.jpg
+    - assets/images/or.jpg
+
+firebase_messaging: ^14.7.10
+    
