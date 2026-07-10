@@ -94,33 +94,79 @@ def create_app():
     app.config.from_object(Config)
     print("DATABASE URI:", app.config["SQLALCHEMY_DATABASE_URI"])
 
-    # ✅ FIXED CORS (THIS IS YOUR MAIN ISSUE)
+    # =========================
+    # CORS
+    # =========================
     CORS(
         app,
-        resources={r"/*": {"origins": [
-            "http://localhost:*",
-            "https://loccim-frontend.onrender.com",
-            "https://loccim-1a612.web.app"
-        ]}},
-        supports_credentials=True
+        resources={
+            r"/*": {
+                "origins": [
+                    "https://loccim-1a612.web.app",
+                    "https://loccim-frontend.onrender.com",
+                    "http://localhost:3000",
+                    "http://127.0.0.1:3000",
+                ]
+            }
+        },
+        supports_credentials=True,
+        methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["Content-Type", "Authorization"],
     )
 
     db.init_app(app)
     migrate.init_app(app, db)
-    socketio.init_app(
-    app,
-    cors_allowed_origins=["https://loccim-frontend.onrender.com", "https://loccim-1a612.web.app"],
-    async_mode="threading"
-)
 
+    socketio.init_app(
+        app,
+        cors_allowed_origins=[
+            "https://loccim-1a612.web.app",
+            "https://loccim-frontend.onrender.com",
+        ],
+        async_mode="threading",
+    )
+
+    # =========================
+    # SECURITY HEADERS
+    # =========================
     @app.after_request
     def security_headers(response):
-        response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-XSS-Protection"] = "1; mode=block"
+        allowed_origins = [
+            "https://loccim-1a612.web.app",
+            "https://loccim-frontend.onrender.com",
+        ]
 
-        # ✅ FIX CORS headers for preflight
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
-        response.headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,DELETE,OPTIONS"
+        origin = request.headers.get("Origin")
+
+        if origin in allowed_origins:
+            response.headers["Access-Control-Allow-Origin"] = origin
+
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+
+        return response
+
+    # =========================
+    # PRE-FLIGHT OPTIONS
+    # =========================
+    @app.route("/<path:path>", methods=["OPTIONS"])
+    def options_handler(path):
+        response = app.make_response(("", 204))
+
+        allowed_origins = [
+            "https://loccim-1a612.web.app",
+            "https://loccim-frontend.onrender.com",
+        ]
+
+        origin = request.headers.get("Origin")
+
+        if origin in allowed_origins:
+            response.headers["Access-Control-Allow-Origin"] = origin
+
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
 
         return response
 
@@ -131,7 +177,6 @@ def create_app():
         create_default_admin()
 
     return app
-
 
 # =========================
 # SOCKET FIX
