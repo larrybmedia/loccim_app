@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:flutter/foundation.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SermonsScreen extends StatefulWidget {
   const SermonsScreen({super.key});
@@ -45,16 +46,13 @@ class _SermonsScreenState extends State<SermonsScreen> {
 
   Future<void> downloadAudioFile(String url) async {
     try {
+      String downloadUrl = url;
       // Flutter Web
       if (kIsWeb) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              "Downloading is available in the browser.",
-            ),
-          ),
+        await launchUrl(
+          Uri.parse(downloadUrl),
+          mode: LaunchMode.externalApplication,
         );
-
         return;
       }
 
@@ -71,7 +69,7 @@ class _SermonsScreenState extends State<SermonsScreen> {
       final savePath = "${dir.path}/$fileName";
 
       await Dio().download(
-        url,
+        downloadUrl,
         savePath,
         onReceiveProgress: (received, total) {
           if (total != -1) {
