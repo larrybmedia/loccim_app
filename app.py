@@ -99,7 +99,8 @@ def create_app():
         app,
         resources={r"/*": {"origins": [
             "http://localhost:*",
-            "https://loccim-frontend.onrender.com"
+            "https://loccim-frontend.onrender.com",
+            "https://loccim-1a612.web.app"
         ]}},
         supports_credentials=True
     )
@@ -108,7 +109,7 @@ def create_app():
     migrate.init_app(app, db)
     socketio.init_app(
     app,
-    cors_allowed_origins=["https://loccim-frontend.onrender.com"],
+    cors_allowed_origins=["https://loccim-frontend.onrender.com", "https://loccim-1a612.web.app"],
     async_mode="threading"
 )
 
