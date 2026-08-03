@@ -987,6 +987,27 @@ def register_routes(app):
             volunteer=volunteer,
         )
 
+    @app.route("/api/volunteers", methods=["GET"])
+    def api_volunteers():
+
+        volunteers = Volunteer.query.order_by(
+            Volunteer.created_at.desc()
+        ).all()
+
+        return jsonify([
+            {
+                "id": v.id,
+                "full_name": v.full_name,
+                "email": v.email,
+                "phone": v.phone,
+                "department": v.department,
+                "status": v.status,
+                "created_at": v.created_at.strftime("%Y-%m-%d")
+                if v.created_at else None,
+            }
+            for v in volunteers
+        ])
+
     @app.route("/api/version")
     def get_version():
         return jsonify({
