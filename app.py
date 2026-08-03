@@ -1008,6 +1008,50 @@ def register_routes(app):
             for v in volunteers
         ])
 
+    @app.route("/api/volunteers", methods=["POST"])
+    def submit_volunteer():
+
+        data = request.get_json()
+
+        if not data:
+            return jsonify({
+                "success": False,
+                "error": "No data received"
+            }), 400
+
+        volunteer = Volunteer(
+            full_name=data.get("full_name"),
+            phone=data.get("phone"),
+            email=data.get("email"),
+            gender=data.get("gender"),
+            branch=data.get("branch"),
+            membership_status=data.get("membership_status"),
+            joined_date=data.get("joined_date"),
+            address=data.get("address"),
+            occupation=data.get("occupation"),
+            skills=data.get("skills"),
+            experience=data.get("experience"),
+            departments=data.get("departments"),
+            availability=data.get("availability"),
+            baptized=data.get("baptized", False),
+            previous_worker=data.get("previous_worker", False),
+            emergency_name=data.get("emergency_name"),
+            emergency_relationship=data.get("emergency_relationship"),
+            emergency_phone=data.get("emergency_phone"),
+            reason=data.get("reason"),
+            medical_conditions=data.get("medical_conditions"),
+            comments=data.get("comments"),
+            status="Pending"
+        )
+
+        db.session.add(volunteer)
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Volunteer application submitted successfully."
+        }), 201
+
     @app.route("/api/version")
     def get_version():
         return jsonify({
