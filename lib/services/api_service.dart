@@ -175,4 +175,70 @@ class ApiService {
       return [];
     }
   }
+
+  static Future<bool> submitVolunteer(
+    Map<String, dynamic> data,
+  ) async {
+    final response = await http.post(
+      Uri.parse("$baseUrl/api/volunteers"),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: jsonEncode(data),
+    );
+
+    return response.statusCode == 201;
+  }
+
+  // ==========================
+  // GET ALL VOLUNTEERS
+  // ==========================
+
+  static Future<List> getVolunteers() async {
+    final response = await http.get(
+      Uri.parse("$baseUrl/admin/volunteers"),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    return [];
+  }
+
+  // ==========================
+  // APPROVE
+  // ==========================
+
+  static Future<bool> approveVolunteer(int id) async {
+    final response = await http.put(
+      Uri.parse("$baseUrl/admin/volunteers/$id/approve"),
+    );
+
+    return response.statusCode == 200;
+  }
+
+  // ==========================
+  // REJECT
+  // ==========================
+
+  static Future<bool> rejectVolunteer(int id) async {
+    final response = await http.put(
+      Uri.parse("$baseUrl/admin/volunteers/$id/reject"),
+    );
+
+    return response.statusCode == 200;
+  }
+
+  // ==========================
+  // DELETE
+  // ==========================
+
+  static Future<bool> deleteVolunteer(int id) async {
+    final response = await http.delete(
+      Uri.parse("$baseUrl/admin/volunteers/$id"),
+    );
+
+    return response.statusCode == 200;
+  }
 }

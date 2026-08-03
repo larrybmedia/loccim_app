@@ -1,8 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../models/branch.dart';
 
 class ContactScreen extends StatelessWidget {
   const ContactScreen({super.key});
+
+  // ================= BRANCHES =================
+  static const List<Branch> branches = [
+    Branch(
+      name: "Mercy Camp Headquarters",
+      pastor: "Prophet Olowoporoku",
+      address: "Makogi Road, Abule Oba, Magboro",
+      phone: "+2348108647938",
+      services: "Sunday - 7:00 AM\nWednesday - 5:30 PM\nFriday - 10:00 PM",
+      mapUrl: "https://maps.google.com/...",
+    ),
+
+    Branch(
+      name: "Lagos Branch",
+      pastor: "Pastor Ade",
+      address: "Ikeja, Lagos",
+      phone: "+2348012345678",
+      services: "Sunday - 8:00 AM\nTuesday - 6:00 PM",
+      mapUrl: "https://maps.google.com/...",
+    ),
+
+    // Add more branches here...
+  ];
 
   Future<void> _call(String number) async {
     final uri = Uri.parse("tel:$number");
@@ -363,12 +387,66 @@ class ContactScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 25),
                   _addressCard(),
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 30),
+                  const Text(
+                    "LOCCIM Branches",
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  Column(
+                    children: branches.map((branch) {
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        child: ExpansionTile(
+                          leading: const Icon(Icons.church),
+                          title: Text(branch.name),
+                          childrenPadding: const EdgeInsets.all(16),
+                          children: [
+                            ListTile(
+                              leading: const Icon(Icons.person),
+                              title: const Text("Pastor"),
+                              subtitle: Text(branch.pastor),
+                            ),
+                            ListTile(
+                              leading: const Icon(Icons.location_on),
+                              title: const Text("Address"),
+                              subtitle: Text(branch.address),
+                            ),
+                            ListTile(
+                              leading: const Icon(Icons.phone),
+                              title: const Text("Phone"),
+                              subtitle: Text(branch.phone),
+                              onTap: () => _call(branch.phone),
+                            ),
+                            ListTile(
+                              leading: const Icon(Icons.schedule),
+                              title: const Text("Service Days"),
+                              subtitle: Text(branch.services),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(10),
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: () => _open(branch.mapUrl),
+                                  icon: const Icon(Icons.directions),
+                                  label: const Text("Get Direction"),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
                   const SizedBox(height: 30),
                   Center(
                     child: SizedBox(
-                      width:
-                          360, // Reduce this value to make the white card narrower
+                      width: 360,
                       child: Card(
                         elevation: 6,
                         color: Colors.white.withOpacity(0.95),

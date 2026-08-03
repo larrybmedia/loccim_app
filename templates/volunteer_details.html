@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Volunteer Details</title>
+
+<style>
+
+body{
+    font-family:Segoe UI,Arial;
+    background:#f4f6f9;
+    margin:0;
+    padding:30px;
+}
+
+.container{
+    max-width:1000px;
+    margin:auto;
+}
+
+.header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:25px;
+}
+
+.header h1{
+    color:#4b0082;
+}
+
+.back-btn{
+    background:#4b0082;
+    color:white;
+    text-decoration:none;
+    padding:10px 20px;
+    border-radius:6px;
+}
+
+.card{
+    background:white;
+    border-radius:10px;
+    padding:25px;
+    margin-bottom:20px;
+    box-shadow:0 3px 10px rgba(0,0,0,.08);
+}
+
+.card h2{
+    margin-top:0;
+    color:#4b0082;
+    border-bottom:1px solid #ddd;
+    padding-bottom:10px;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:15px;
+}
+
+.item{
+    background:#fafafa;
+    padding:12px;
+    border-radius:6px;
+}
+
+.label{
+    font-size:12px;
+    color:#888;
+    margin-bottom:5px;
+}
+
+.value{
+    font-size:15px;
+    font-weight:600;
+}
+
+.actions{
+    display:flex;
+    gap:15px;
+    margin-top:25px;
+}
+
+button{
+    border:none;
+    color:white;
+    padding:12px 25px;
+    cursor:pointer;
+    border-radius:6px;
+    font-size:15px;
+}
+
+.approve{
+    background:#27ae60;
+}
+
+.reject{
+    background:#f39c12;
+}
+
+.delete{
+    background:#e74c3c;
+}
+
+button:hover{
+    opacity:.9;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="header">
+
+<h1>Volunteer Details</h1>
+
+<a href="/volunteers" class="back-btn">
+← Back
+</a>
+
+</div>
+
+<div class="card">
+
+<h2>Personal Information</h2>
+
+<div class="grid">
+
+<div class="item">
+<div class="label">Full Name</div>
+<div class="value">{{ volunteer.full_name }}</div>
+</div>
+
+<div class="item">
+<div class="label">Phone</div>
+<div class="value">{{ volunteer.phone }}</div>
+</div>
+
+<div class="item">
+<div class="label">Email</div>
+<div class="value">{{ volunteer.email }}</div>
+</div>
+
+<div class="item">
+<div class="label">Gender</div>
+<div class="value">{{ volunteer.gender }}</div>
+</div>
+
+<div class="item">
+<div class="label">Address</div>
+<div class="value">{{ volunteer.address }}</div>
+</div>
+
+<div class="item">
+<div class="label">Occupation</div>
+<div class="value">{{ volunteer.occupation }}</div>
+</div>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>Church Information</h2>
+
+<div class="grid">
+
+<div class="item">
+<div class="label">Branch</div>
+<div class="value">{{ volunteer.branch }}</div>
+</div>
+
+<div class="item">
+<div class="label">Membership Status</div>
+<div class="value">{{ volunteer.membership_status }}</div>
+</div>
+
+<div class="item">
+<div class="label">Joined Date</div>
+<div class="value">{{ volunteer.joined_date }}</div>
+</div>
+
+<div class="item">
+<div class="label">Departments</div>
+<div class="value">{{ volunteer.departments }}</div>
+</div>
+
+<div class="item">
+<div class="label">Availability</div>
+<div class="value">{{ volunteer.availability }}</div>
+</div>
+
+<div class="item">
+<div class="label">Baptized</div>
+<div class="value">
+{{ "Yes" if volunteer.baptized else "No" }}
+</div>
+</div>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>Experience</h2>
+
+<div class="grid">
+
+<div class="item">
+<div class="label">Skills</div>
+<div class="value">{{ volunteer.skills }}</div>
+</div>
+
+<div class="item">
+<div class="label">Experience</div>
+<div class="value">{{ volunteer.experience }}</div>
+</div>
+
+<div class="item">
+<div class="label">Previous Worker</div>
+<div class="value">
+{{ "Yes" if volunteer.previous_worker else "No" }}
+</div>
+</div>
+
+<div class="item">
+<div class="label">Reason for Volunteering</div>
+<div class="value">{{ volunteer.reason }}</div>
+</div>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>Emergency Contact</h2>
+
+<div class="grid">
+
+<div class="item">
+<div class="label">Contact Name</div>
+<div class="value">{{ volunteer.emergency_name }}</div>
+</div>
+
+<div class="item">
+<div class="label">Relationship</div>
+<div class="value">{{ volunteer.emergency_relationship }}</div>
+</div>
+
+<div class="item">
+<div class="label">Phone</div>
+<div class="value">{{ volunteer.emergency_phone }}</div>
+</div>
+
+<div class="item">
+<div class="label">Medical Conditions</div>
+<div class="value">{{ volunteer.medical_conditions }}</div>
+</div>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>Additional Comments</h2>
+
+<p>{{ volunteer.comments }}</p>
+
+<div class="actions">
+
+<form action="/approve_volunteer/{{ volunteer.id }}" method="POST">
+<button class="approve">
+Approve
+</button>
+</form>
+
+<form action="/reject_volunteer/{{ volunteer.id }}" method="POST">
+<button class="reject">
+Reject
+</button>
+</form>
+
+<form action="/delete_volunteer/{{ volunteer.id }}" method="POST"
+onsubmit="return confirm('Delete this volunteer permanently?')">
+<button class="delete">
+Delete
+</button>
+</form>
+
+</div>
+
+</div>
+
+</div>
+
+</body>
+</html>

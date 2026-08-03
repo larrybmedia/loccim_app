@@ -180,7 +180,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               onPressed: () => Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => const ContactScreen(),
+                                  builder: (_) => ContactScreen(),
                                 ),
                               ),
                               icon: const Icon(Icons.phone),
@@ -235,7 +235,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisCount: crossAxisCount,
                   crossAxisSpacing: 14,
                   mainAxisSpacing: 14,
-                  childAspectRatio: 1.55,
+                  childAspectRatio: 2.5,
                   children: [
                     _menuButton(
                       context,
@@ -333,28 +333,28 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 10,
+            horizontal: 8,
+            vertical: 4,
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               CircleAvatar(
-                radius: 22,
+                radius: 16,
                 backgroundColor: onTap == null ? Colors.grey.shade200 : bgColor,
                 child: Icon(
                   icon,
-                  size: 22,
+                  size: 18,
                   color: onTap == null ? Colors.grey : iconColor,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               Text(
                 title,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontWeight: FontWeight.w600,
-                  fontSize: 13,
+                  fontSize: 10,
                   color: Colors.black87,
                 ),
               ),

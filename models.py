@@ -102,4 +102,42 @@ class Announcement(db.Model):
         db.DateTime,
         default=datetime.utcnow
     )
+
+class Volunteer(db.Model):
+    __tablename__ = "volunteers"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    full_name = db.Column(db.String(200), nullable=False)
+    phone = db.Column(db.String(50))
+    email = db.Column(db.String(150))
+
+    gender = db.Column(db.String(20))
+    branch = db.Column(db.String(100))
+    membership_status = db.Column(db.String(100))
+    joined_date = db.Column(db.String(50))
+
+    address = db.Column(db.Text)
+    occupation = db.Column(db.String(150))
+
+    skills = db.Column(db.Text)
+    experience = db.Column(db.Text)
+
+    departments = db.Column(db.Text)
+    availability = db.Column(db.Text)
+
+    baptized = db.Column(db.Boolean, default=False)
+    previous_worker = db.Column(db.Boolean, default=False)
+
+    emergency_name = db.Column(db.String(150))
+    emergency_relationship = db.Column(db.String(100))
+    emergency_phone = db.Column(db.String(50))
+
+    reason = db.Column(db.Text)
+    medical_conditions = db.Column(db.Text)
+    comments = db.Column(db.Text)
+
+    status = db.Column(db.String(30), default="Pending")
+
+    created_at = db.Column(db.DateTime, default=db.func.now())
     

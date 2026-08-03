@@ -46,17 +46,30 @@ class _SermonsScreenState extends State<SermonsScreen> {
 
   Future<void> downloadAudioFile(String url) async {
     try {
-      String downloadUrl = url;
-      // Flutter Web
+      // Debug
+      print("Downloading from: $url");
+
+      // ===========================
+      // WEB
+      // ===========================
       if (kIsWeb) {
-        await launchUrl(
-          Uri.parse(downloadUrl),
-          mode: LaunchMode.externalApplication,
-        );
+        final Uri uri = Uri.parse(url);
+
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(
+            uri,
+            mode: LaunchMode.externalApplication,
+          );
+        } else {
+          throw Exception("Could not launch $url");
+        }
+
         return;
       }
 
-      // Android permissions
+      // ===========================
+      // ANDROID
+      // ===========================
       if (Platform.isAndroid) {
         await Permission.storage.request();
         await Permission.manageExternalStorage.request();
@@ -69,7 +82,7 @@ class _SermonsScreenState extends State<SermonsScreen> {
       final savePath = "${dir.path}/$fileName";
 
       await Dio().download(
-        downloadUrl,
+        url,
         savePath,
         onReceiveProgress: (received, total) {
           if (total != -1) {

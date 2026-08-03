@@ -303,6 +303,7 @@
     <a href="/events">🗓️ Events</a>
     <a href="/livestream">📹 Live Stream</a>
     <a href="/gallery">🖼️ Gallery</a>
+    <a href="/volunteers">🙋 Volunteer Management</a>
     <a href="/logout" class="logout-btn">🚪 Logout</a>
 </div>
 
@@ -324,6 +325,28 @@
             <h3>📥 App Downloads</h3>
             <div class="value" id="appDownloadsCount">{{ app_downloads if app_downloads else '0' }}</div>
             <div class="subtitle">Total App Installer Downloads</div>
+        </div>
+
+        <h1>Volunteer Management</h1>
+        <div class="card">
+            <h3>🙋 Volunteers</h3>
+            <div class="value">
+                {{ volunteer_count if volunteer_count else '0' }}
+            </div>
+            <div class="subtitle">
+                Registered Volunteers
+            </div>
+        </div>
+        <div class="card">
+            <h3>⏳ Pending Volunteers</h3>
+
+            <div class="value">
+                {{ pending_volunteers }}
+            </div>
+
+            <div class="subtitle">
+                Awaiting Approval
+            </div>
         </div>
     </div>
 

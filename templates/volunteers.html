@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volunteer Applications</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: "Segoe UI", Arial, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            background: #f4f6f9;
+        }
+
+        .container {
+            width: 95%;
+            margin: 30px auto;
+        }
+
+        h2 {
+            color: #4b0082;
+            margin-bottom: 20px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,.08);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #4b0082;
+            color: white;
+            padding: 14px;
+            text-align: left;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        tr:hover {
+            background: #fafafa;
+        }
+
+        .badge {
+            padding: 6px 10px;
+            border-radius: 20px;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .pending {
+            background: orange;
+        }
+
+        .approved {
+            background: green;
+        }
+
+        .rejected {
+            background: red;
+        }
+
+        button {
+            border: none;
+            border-radius: 5px;
+            padding: 8px 14px;
+            margin: 2px;
+            cursor: pointer;
+            color: white;
+            transition: .2s;
+        }
+
+        button:hover {
+            opacity: .9;
+        }
+
+        .details {
+            background: #4b0082;
+        }
+
+        .approve {
+            background: green;
+        }
+
+        .reject {
+            background: orange;
+        }
+
+        .delete {
+            background: red;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 40px;
+            color: gray;
+        }
+    </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <h2>🙋 Volunteer Applications</h2>
+
+    <div class="table-wrapper">
+
+        {% if volunteers %}
+
+        <table>
+
+            <thead>
+
+            <tr>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Branch</th>
+                <th>Status</th>
+                <th width="330">Actions</th>
+            </tr>
+
+            </thead>
+
+            <tbody>
+
+            {% for volunteer in volunteers %}
+
+            <tr>
+
+                <td>{{ volunteer.full_name }}</td>
+
+                <td>{{ volunteer.phone }}</td>
+
+                <td>{{ volunteer.branch }}</td>
+
+                <td>
+
+                    {% if volunteer.status == "Approved" %}
+                        <span class="badge approved">Approved</span>
+
+                    {% elif volunteer.status == "Rejected" %}
+                        <span class="badge rejected">Rejected</span>
+
+                    {% else %}
+                        <span class="badge pending">Pending</span>
+                    {% endif %}
+
+                </td>
+
+                <td>
+
+                    <button class="details"
+                            onclick="window.location.href='/volunteer/{{ volunteer.id }}'">
+                        View
+                    </button>
+
+                    <button class="approve"
+                            onclick="approveVolunteer('{{ volunteer.id }}')">
+                        Approve
+                    </button>
+
+                    <button class="reject"
+                            onclick="rejectVolunteer('{{ volunteer.id }}')">
+                        Reject
+                    </button>
+
+                    <button class="delete"
+                            onclick="deleteVolunteer('{{ volunteer.id }}')">
+                        Delete
+                    </button>
+
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+        {% else %}
+
+        <div class="empty">
+            <h3>No Volunteer Applications Found</h3>
+            <p>Applications submitted from the mobile app will appear here.</p>
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+<script>
+async function approveVolunteer(id) {
+    try {
+        const response = await fetch("/approve_volunteer/" + id, {
+            method: "POST"
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert("Volunteer approved successfully.");
+            location.reload();
+        } else {
+            alert(data.message || "Approval failed.");
+        }
+    } catch (e) {
+        alert("Network error.");
+        console.error(e);
+    }
+}
+
+async function rejectVolunteer(id) {
+    try {
+        const response = await fetch("/reject_volunteer/" + id, {
+            method: "POST"
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert("Volunteer rejected.");
+            location.reload();
+        } else {
+            alert(data.message || "Reject failed.");
+        }
+    } catch (e) {
+        alert("Network error.");
+        console.error(e);
+    }
+}
+
+async function deleteVolunteer(id) {
+
+    if (!confirm("Delete this volunteer?")) return;
+
+    try {
+        const response = await fetch("/delete_volunteer/" + id, {
+            method: "DELETE"
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert("Volunteer deleted.");
+            location.reload();
+        } else {
+            alert(data.message || "Delete failed.");
+        }
+
+    } catch (e) {
+        alert("Network error.");
+        console.error(e);
+    }
+}
+</script>
+
+</body>
+</html>

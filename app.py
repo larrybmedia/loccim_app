@@ -16,7 +16,7 @@ from flask_socketio import SocketIO
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from flask_cors import cross_origin
-from models import User, Announcement, Book, Sermon, PrayerRequest, Testimony, Event, Gallery, Settings, AuditLog
+from models import User, Announcement, Book, Sermon, PrayerRequest, Testimony, Event, Gallery, Settings, AuditLog, Volunteer
 
 
 # =========================
@@ -25,8 +25,7 @@ from models import User, Announcement, Book, Sermon, PrayerRequest, Testimony, E
 app = Flask(__name__)
 
 socketio = SocketIO(
-    app,
-    cors_allowed_origins="*",
+    cors_allowed_origins=[],
     async_mode="threading",
     logger=True,
     engineio_logger=True
@@ -41,9 +40,10 @@ cloudinary.config(
     secure=True,
 )
 
+print("Cloudinary Configuration")
 print("Cloud Name:", os.getenv("CLOUDINARY_CLOUD_NAME"))
-print("API Key:", os.getenv("CLOUDINARY_API_KEY"))
-print("API Secret exists:", os.getenv("CLOUDINARY_API_SECRET") is not None)
+print("API Key exists:", bool(os.getenv("CLOUDINARY_API_KEY")))
+print("API Secret exists:", bool(os.getenv("CLOUDINARY_API_SECRET")))
 
 # =========================
 # CONFIG
@@ -58,6 +58,7 @@ class Config:
 
     SQLALCHEMY_DATABASE_URI = database_url or "sqlite:///loccim.db"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    MAX_CONTENT_LENGTH = 200 * 1024 * 1024
 
     SESSION_COOKIE_SAMESITE = "None"
     SESSION_COOKIE_SECURE = True
@@ -106,6 +107,7 @@ def create_app():
                     "https://loccim-frontend.onrender.com",
                     "http://localhost:3000",
                     "http://127.0.0.1:3000",
+                    "http://localhost:*",
                 ]
             }
         },
@@ -189,16 +191,19 @@ def handle_disconnect():
 
 @socketio.on("connect")
 def on_connect():
-    # 1. Debug: Check if it's hitting this point
-    print("Client attempting to connect...")
-    
-    # 2. Logic check
+
+    print("Socket connected:", request.sid)
+
     setting = Settings.query.first()
+
     if setting:
-        # Note: 'emit' inside a connect handler might be too early 
-        # for some clients. Use emit with room=request.sid to be safe.
-        from flask import request
-        socketio.emit("livestream_updated", {"live_url": setting.live_url}, to=request.sid)
+        socketio.emit(
+            "livestream_updated",
+            {
+                "live_url": setting.live_url
+            },
+            room=request.sid
+        )
     else:
         print("No settings found in database.")
 
@@ -260,35 +265,38 @@ def register_routes(app):
             Announcement.created_at.desc()
         ).all()
 
+        # Volunteer statistics
+        volunteer_count = Volunteer.query.count()
+
+        pending_volunteers = Volunteer.query.filter_by(
+            status="Pending"
+        ).count()
+
+
         return render_template(
             "dashboard.html",
             sermons=Sermon.query.order_by(Sermon.id.desc()).all(),
+
             prayers=PrayerRequest.query.filter_by(
                 status="Pending"
             ).all(),
+
             testimonies=Testimony.query.order_by(
                 Testimony.id.desc()
             ).all(),
+
             books=books,
+
+            volunteer_count=volunteer_count,
+
+            pending_volunteers=pending_volunteers,
+
             announcements=announcements,
+
             live_youtube_views=0,
             total_stream_views=0,
             app_downloads=0
         )
-
-    @app.route("/create_admin")
-    def create_admin():
-        if not User.query.filter_by(username="admin").first():
-            admin = User(
-                username="admin",
-                password=generate_password_hash("admin1234"),
-                role="admin"
-            )
-
-            db.session.add(admin)
-            db.session.commit()
-
-        return "Admin created"
 
     @app.route("/check_admin")
     def check_admin():
@@ -310,17 +318,38 @@ def register_routes(app):
 
     @app.route("/api/admin/change-password", methods=["POST"])
     def change_password():
+
         data = request.json
+
         user = User.query.filter_by(username='admin').first()
-        
+
+        if not user:
+            return jsonify({
+                "message": "Admin user not found"
+            }), 404
+
+
         # 1. Verify current password
-        if not check_password_hash(user.password_hash, data['current_password']):
-            return jsonify({"message": "Incorrect current password"}), 401
-    
+        if not check_password_hash(
+            user.password,
+            data['current_password']
+        ):
+            return jsonify({
+                "message": "Incorrect current password"
+            }), 401
+
+
         # 2. Update to new password
-        user.password_hash = generate_password_hash(data['new_password'])
+        user.password = generate_password_hash(
+            data['new_password']
+        )
+
         db.session.commit()
-        return jsonify({"message": "Password updated successfully"})
+
+
+        return jsonify({
+            "message": "Password updated successfully"
+        })
         
     def download_url(url):
       if url:
@@ -732,6 +761,7 @@ def register_routes(app):
 
     @app.route("/api/set_live", methods=["POST"])
     def set_live():
+
         live_url = request.form.get("live_url")
 
         setting = Settings.query.first()
@@ -741,9 +771,17 @@ def register_routes(app):
             db.session.add(setting)
 
         setting.live_url = live_url
+
         db.session.commit()
 
-        flash("Live stream updated successfully!", "success")
+
+        socketio.emit(
+            "livestream_updated",
+            {
+                "live_url": live_url
+            }
+        )
+
 
         return redirect(url_for("livestream"))
     
@@ -926,6 +964,28 @@ def register_routes(app):
         return jsonify({
             "success": True
         })
+
+    @app.route("/volunteers")
+    def volunteer_management():
+        volunteers = Volunteer.query.order_by(
+            Volunteer.created_at.desc()
+        ).all()
+
+        return render_template(
+            "volunteers.html",
+            volunteers=volunteers
+        )
+    
+    @app.route("/volunteer/<int:id>")
+    @login_required
+    def volunteer_details(id):
+
+        volunteer = Volunteer.query.get_or_404(id)
+
+        return render_template(
+            "volunteer_details.html",
+            volunteer=volunteer,
+        )
 
     @app.route("/api/version")
     def get_version():
