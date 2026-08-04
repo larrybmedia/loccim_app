@@ -17,6 +17,67 @@
             background: #f4f6f9;
         }
 
+        body {
+            margin: 0;
+            background: #f4f6f9;
+            display: flex;
+            font-family: "Segoe UI", Arial, sans-serif;
+        }
+
+        /* ===========================
+        SIDEBAR
+        =========================== */
+
+        .sidebar {
+            width: 250px;
+            min-height: 100vh;
+            background: #4b0082;
+            color: white;
+            position: fixed;
+            top: 0;
+            left: 0;
+            overflow-y: auto;
+            box-shadow: 3px 0 10px rgba(0,0,0,.15);
+        }
+
+        .sidebar h2 {
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+            border-bottom: 1px solid rgba(255,255,255,.2);
+        }
+
+        .sidebar a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 15px 20px;
+            transition: .3s;
+        }
+
+        .sidebar a:hover,
+        .sidebar a.active {
+            background: rgba(255,255,255,.15);
+            border-left: 5px solid gold;
+            padding-left: 15px;
+        }
+
+        .logout-btn {
+            margin-top: 30px;
+            background: #d32f2f;
+        }
+
+        /* ===========================
+        MAIN CONTENT
+        =========================== */
+
+        .container {
+            margin-left: 250px;
+            padding: 30px;
+            width: calc(100% - 250px);
+        }
+
         .container {
             width: 95%;
             margin: 30px auto;
@@ -111,43 +172,44 @@
             color: gray;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width:768px){
 
-            .sidebar {
-                width: 220px;
+            .sidebar{
+                width:220px;
             }
 
-            .container {
-                margin-left: 220px;
-                width: calc(100% - 220px);
-                padding: 20px;
+            .container{
+                margin-left:220px;
+                width:calc(100% - 220px);
             }
 
-            table {
-                font-size: 14px;
-            }
         }
 
-        @media (max-width: 600px) {
+        @media (max-width:600px){
 
-            .sidebar {
-                position: relative;
-                width: 100%;
-                height: auto;
+            body{
+                display:block;
             }
 
-            .container {
-                margin-left: 0;
-                width: 100%;
-                padding: 15px;
+            .sidebar{
+                position:relative;
+                width:100%;
+                min-height:auto;
             }
+
+            .container{
+                margin-left:0;
+                width:100%;
+                padding:15px;
+            }
+
         }
     </style>
 
 </head>
 
 <body>
-    
+
     <div class="sidebar">
     <h2>LOCCIM ADMIN</h2>
     <a href="/dashboard">🏠 Dashboard</a>
