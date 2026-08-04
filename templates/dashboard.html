@@ -297,23 +297,42 @@
             margin-bottom:35px;
         }
 
-        .card{
-            background:#fff;
-            border-radius:10px;
-            padding:25px;
-            text-align:center;
-            box-shadow:0 3px 10px rgba(0,0,0,.08);
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 20px;
         }
 
-        .card h3{
-            color:#666;
-            margin-bottom:10px;
-            font-size:18px;
+        .card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,.08);
         }
 
-        .card h1{
-            color:#4b0082;
-            font-size:36px;
+        .card h3 {
+            color: #4b0082;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .card h1 {
+            font-size: 36px;
+            color: #333;
+        }
+
+        @media (max-width: 992px) {
+            .cards-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -336,6 +355,7 @@
 <div class="main">
     <h1>Operational Dashboard</h1>
 
+        <div class="cards-grid">
 
         <div class="card">
             <h3>👥 Members</h3>
@@ -377,6 +397,7 @@
             <h1 id="volunteers">0</h1>
         </div>
 
+    </div>
 
     <div class="management-section">
         <h2>📚 Deploy New E-Book to Front Page</h2>
