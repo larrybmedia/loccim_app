@@ -341,38 +341,63 @@ async function approveVolunteer(id) {
     }
 }
 
-async function rejectVolunteer(id) {
+async function approveVolunteer(id) {
     try {
-        const response = await fetch("/reject_volunteer/" + id, {
-            method: "POST"
+        const response = await fetch("/api/admin/volunteers/" + id + "/approve", {
+            method: "PUT"
         });
 
         const data = await response.json();
 
-        if (data.success) {
-            alert("Volunteer rejected.");
+        if (response.ok) {
+            alert("Volunteer approved successfully.");
             location.reload();
         } else {
-            alert(data.message || "Reject failed.");
+            alert(data.message || "Approval failed.");
         }
+
     } catch (e) {
         alert("Network error.");
         console.error(e);
     }
 }
 
+
+async function rejectVolunteer(id) {
+    try {
+        const response = await fetch("/api/admin/volunteers/" + id + "/reject", {
+            method: "PUT"
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert("Volunteer rejected.");
+            location.reload();
+        } else {
+            alert(data.message || "Reject failed.");
+        }
+
+    } catch (e) {
+        alert("Network error.");
+        console.error(e);
+    }
+}
+
+
 async function deleteVolunteer(id) {
 
     if (!confirm("Delete this volunteer?")) return;
 
     try {
-        const response = await fetch("/delete_volunteer/" + id, {
+
+        const response = await fetch("/api/admin/volunteers/" + id, {
             method: "DELETE"
         });
 
         const data = await response.json();
 
-        if (data.success) {
+        if (response.ok) {
             alert("Volunteer deleted.");
             location.reload();
         } else {
@@ -384,6 +409,7 @@ async function deleteVolunteer(id) {
         console.error(e);
     }
 }
+
 </script>
 
 </body>

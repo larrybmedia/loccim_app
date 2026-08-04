@@ -928,6 +928,17 @@ def register_routes(app):
             "success": True
         })
 
+    @app.route("/volunteers")
+    def volunteer_management():
+        volunteers = Volunteer.query.order_by(
+            Volunteer.created_at.desc()
+        ).all()
+
+        return render_template(
+            "volunteers.html",
+            volunteers=volunteers
+        )
+
 
     @app.route("/api/volunteers", methods=["POST"])
     def submit_volunteer():
