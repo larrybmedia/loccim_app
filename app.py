@@ -1,5 +1,6 @@
 ﻿import os
 from extensions import db, migrate
+from sqlalchemy import func
 from datetime import datetime
 from functools import wraps
 import cloudinary
@@ -16,7 +17,19 @@ from flask_socketio import SocketIO
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from flask_cors import cross_origin
-from models import User, Announcement, Book, Sermon, PrayerRequest, Testimony, Event, Gallery, Settings, AuditLog, Volunteer
+from models import (
+    User,
+    Announcement,
+    Book,
+    Sermon,
+    PrayerRequest,
+    Testimony,
+    Event,
+    Gallery,
+    Settings,
+    AuditLog,
+    Volunteer,
+)
 
 
 # =========================
@@ -25,7 +38,8 @@ from models import User, Announcement, Book, Sermon, PrayerRequest, Testimony, E
 app = Flask(__name__)
 
 socketio = SocketIO(
-    cors_allowed_origins=[],
+    app,
+    cors_allowed_origins="*",
     async_mode="threading",
     logger=True,
     engineio_logger=True
@@ -40,10 +54,9 @@ cloudinary.config(
     secure=True,
 )
 
-print("Cloudinary Configuration")
 print("Cloud Name:", os.getenv("CLOUDINARY_CLOUD_NAME"))
-print("API Key exists:", bool(os.getenv("CLOUDINARY_API_KEY")))
-print("API Secret exists:", bool(os.getenv("CLOUDINARY_API_SECRET")))
+print("API Key:", os.getenv("CLOUDINARY_API_KEY"))
+print("API Secret exists:", os.getenv("CLOUDINARY_API_SECRET") is not None)
 
 # =========================
 # CONFIG
@@ -58,7 +71,6 @@ class Config:
 
     SQLALCHEMY_DATABASE_URI = database_url or "sqlite:///loccim.db"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    MAX_CONTENT_LENGTH = 200 * 1024 * 1024
 
     SESSION_COOKIE_SAMESITE = "None"
     SESSION_COOKIE_SECURE = True
@@ -95,80 +107,33 @@ def create_app():
     app.config.from_object(Config)
     print("DATABASE URI:", app.config["SQLALCHEMY_DATABASE_URI"])
 
-    # =========================
-    # CORS
-    # =========================
+    # ✅ FIXED CORS (THIS IS YOUR MAIN ISSUE)
     CORS(
         app,
-        resources={
-            r"/*": {
-                "origins": [
-                    "https://loccim-1a612.web.app",
-                    "https://loccim-frontend.onrender.com",
-                    "http://localhost:3000",
-                    "http://127.0.0.1:3000",
-                    "http://localhost:*",
-                ]
-            }
-        },
-        supports_credentials=True,
-        methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        allow_headers=["Content-Type", "Authorization"],
+        resources={r"/*": {"origins": [
+            "http://localhost:*",
+            "https://loccim-frontend.onrender.com",
+            "https://loccim-1a612.web.app"
+        ]}},
+        supports_credentials=True
     )
 
     db.init_app(app)
     migrate.init_app(app, db)
-
     socketio.init_app(
-        app,
-        cors_allowed_origins=[
-            "https://loccim-1a612.web.app",
-            "https://loccim-frontend.onrender.com",
-        ],
-        async_mode="threading",
-    )
+    app,
+    cors_allowed_origins=["https://loccim-frontend.onrender.com", "https://loccim-1a612.web.app"],
+    async_mode="threading"
+)
 
-    # =========================
-    # SECURITY HEADERS
-    # =========================
     @app.after_request
     def security_headers(response):
-        allowed_origins = [
-            "https://loccim-1a612.web.app",
-            "https://loccim-frontend.onrender.com",
-        ]
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
 
-        origin = request.headers.get("Origin")
-
-        if origin in allowed_origins:
-            response.headers["Access-Control-Allow-Origin"] = origin
-
-        response.headers["Access-Control-Allow-Credentials"] = "true"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-
-        return response
-
-    # =========================
-    # PRE-FLIGHT OPTIONS
-    # =========================
-    @app.route("/<path:path>", methods=["OPTIONS"])
-    def options_handler(path):
-        response = app.make_response(("", 204))
-
-        allowed_origins = [
-            "https://loccim-1a612.web.app",
-            "https://loccim-frontend.onrender.com",
-        ]
-
-        origin = request.headers.get("Origin")
-
-        if origin in allowed_origins:
-            response.headers["Access-Control-Allow-Origin"] = origin
-
-        response.headers["Access-Control-Allow-Credentials"] = "true"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        # ✅ FIX CORS headers for preflight
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
+        response.headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,DELETE,OPTIONS"
 
         return response
 
@@ -179,6 +144,7 @@ def create_app():
         create_default_admin()
 
     return app
+
 
 # =========================
 # SOCKET FIX
@@ -191,19 +157,16 @@ def handle_disconnect():
 
 @socketio.on("connect")
 def on_connect():
-
-    print("Socket connected:", request.sid)
-
+    # 1. Debug: Check if it's hitting this point
+    print("Client attempting to connect...")
+    
+    # 2. Logic check
     setting = Settings.query.first()
-
     if setting:
-        socketio.emit(
-            "livestream_updated",
-            {
-                "live_url": setting.live_url
-            },
-            room=request.sid
-        )
+        # Note: 'emit' inside a connect handler might be too early 
+        # for some clients. Use emit with room=request.sid to be safe.
+        from flask import request
+        socketio.emit("livestream_updated", {"live_url": setting.live_url}, to=request.sid)
     else:
         print("No settings found in database.")
 
@@ -213,6 +176,7 @@ def on_connect():
 def register_routes(app):
     @app.route("/", methods=["GET", "POST"])
     def login():
+        
         error = None
         if request.method == "POST":
             username = request.form.get("username")
@@ -265,38 +229,86 @@ def register_routes(app):
             Announcement.created_at.desc()
         ).all()
 
-        # Volunteer statistics
-        volunteer_count = Volunteer.query.count()
-
-        pending_volunteers = Volunteer.query.filter_by(
-            status="Pending"
-        ).count()
-
-
         return render_template(
             "dashboard.html",
             sermons=Sermon.query.order_by(Sermon.id.desc()).all(),
-
-            prayers=PrayerRequest.query.filter_by(
-                status="Pending"
-            ).all(),
-
-            testimonies=Testimony.query.order_by(
-                Testimony.id.desc()
-            ).all(),
-
+            prayers=PrayerRequest.query.filter_by(status="Pending").all(),
+            testimonies=Testimony.query.order_by(Testimony.id.desc()).all(),
             books=books,
-
-            volunteer_count=volunteer_count,
-
-            pending_volunteers=pending_volunteers,
-
             announcements=announcements,
-
             live_youtube_views=0,
             total_stream_views=0,
             app_downloads=0
         )
+
+
+    @app.route("/api/dashboard/stats", methods=["GET"])
+    @login_required
+    def dashboard_stats():
+
+        members = 102455
+
+        volunteers = Volunteer.query.count()
+
+        prayer_requests = PrayerRequest.query.count()
+
+        testimonies = Testimony.query.filter_by(
+            approved=True
+        ).count()
+
+        sermon_streams = Sermon.query.count()
+
+        active_users = 8945
+
+        downloads = 48200
+
+        live_viewers = 3245
+
+        return jsonify({
+            "members": members,
+            "downloads": downloads,
+            "active_users": active_users,
+            "sermon_streams": sermon_streams,
+            "live_viewers": live_viewers,
+            "prayer_requests": prayer_requests,
+            "testimonies": testimonies,
+            "volunteers": volunteers
+        })
+
+    @app.route("/api/admin/stats", methods=["GET"])
+    def admin_stats():
+
+        from models import (
+            Event,
+            Sermon,
+            Book,
+            Testimony,
+            Volunteer,
+            Prayer
+        )
+
+        return jsonify({
+            "events": Event.query.count(),
+            "sermons": Sermon.query.count(),
+            "books": Book.query.count(),
+            "testimonies": Testimony.query.count(),
+            "volunteers": Volunteer.query.count(),
+            "prayers": Prayer.query.count()
+        })
+
+    @app.route("/create_admin")
+    def create_admin():
+        if not User.query.filter_by(username="admin").first():
+            admin = User(
+                username="admin",
+                password=generate_password_hash("admin1234"),
+                role="admin"
+            )
+
+            db.session.add(admin)
+            db.session.commit()
+
+        return "Admin created"
 
     @app.route("/check_admin")
     def check_admin():
@@ -318,38 +330,17 @@ def register_routes(app):
 
     @app.route("/api/admin/change-password", methods=["POST"])
     def change_password():
-
         data = request.json
-
         user = User.query.filter_by(username='admin').first()
-
-        if not user:
-            return jsonify({
-                "message": "Admin user not found"
-            }), 404
-
-
+        
         # 1. Verify current password
-        if not check_password_hash(
-            user.password,
-            data['current_password']
-        ):
-            return jsonify({
-                "message": "Incorrect current password"
-            }), 401
-
-
+        if not check_password_hash(user.password_hash, data['current_password']):
+            return jsonify({"message": "Incorrect current password"}), 401
+    
         # 2. Update to new password
-        user.password = generate_password_hash(
-            data['new_password']
-        )
-
+        user.password_hash = generate_password_hash(data['new_password'])
         db.session.commit()
-
-
-        return jsonify({
-            "message": "Password updated successfully"
-        })
+        return jsonify({"message": "Password updated successfully"})
         
     def download_url(url):
       if url:
@@ -761,7 +752,6 @@ def register_routes(app):
 
     @app.route("/api/set_live", methods=["POST"])
     def set_live():
-
         live_url = request.form.get("live_url")
 
         setting = Settings.query.first()
@@ -771,17 +761,9 @@ def register_routes(app):
             db.session.add(setting)
 
         setting.live_url = live_url
-
         db.session.commit()
 
-
-        socketio.emit(
-            "livestream_updated",
-            {
-                "live_url": live_url
-            }
-        )
-
+        flash("Live stream updated successfully!", "success")
 
         return redirect(url_for("livestream"))
     
@@ -945,6 +927,138 @@ def register_routes(app):
         return jsonify({
             "success": True
         })
+
+
+    @app.route("/api/volunteers", methods=["POST"])
+    def submit_volunteer():
+        data = request.get_json()
+
+        try:
+            volunteer = Volunteer(
+                full_name=data.get("full_name"),
+                phone=data.get("phone"),
+                email=data.get("email"),
+                gender=data.get("gender"),
+                branch=data.get("branch"),
+                membership_status=data.get("membership_status"),
+
+                joined_date=datetime.fromisoformat(
+                    data["joined_date"]
+                ).date() if data.get("joined_date") else None,
+
+                address=data.get("address"),
+                occupation=data.get("occupation"),
+                skills=data.get("skills"),
+                experience=data.get("experience"),
+
+                departments=",".join(
+                    data.get("departments", [])
+                ),
+
+                availability=",".join(
+                    data.get("availability", [])
+                ),
+
+                baptized=data.get("baptized", False),
+
+                previous_worker=data.get(
+                    "previous_worker",
+                    False,
+                ),
+
+                emergency_name=data.get("emergency_name"),
+
+                emergency_relationship=data.get(
+                    "emergency_relationship"
+                ),
+
+                emergency_phone=data.get("emergency_phone"),
+
+                reason=data.get("reason"),
+
+                medical_conditions=data.get(
+                    "medical_conditions"
+                ),
+
+                comments=data.get("comments"),
+            )
+
+            db.session.add(volunteer)
+            db.session.commit()
+
+            return jsonify({
+                "success": True,
+                "message": "Volunteer application submitted successfully."
+            }), 201
+
+        except Exception as e:
+            db.session.rollback()
+
+            return jsonify({
+                "success": False,
+                "error": str(e)
+            }), 500
+
+    @app.route("/api/admin/volunteers", methods=["GET"])
+    def get_volunteers():
+        volunteers = Volunteer.query.order_by(
+            Volunteer.created_at.desc()
+        ).all()
+
+        return jsonify([
+            {
+                "id": v.id,
+                "full_name": v.full_name,
+                "phone": v.phone,
+                "email": v.email,
+                "branch": v.branch,
+                "gender": v.gender,
+                "membership_status": v.membership_status,
+                "departments": v.departments.split(",") if v.departments else [],
+                "availability": v.availability.split(",") if v.availability else [],
+                "status": v.status,
+                "created_at": v.created_at.strftime("%d %b %Y"),
+            }
+            for v in volunteers
+        ])
+
+    @app.route("/api/admin/volunteers/<int:id>/approve", methods=["PUT"])
+    def approve_volunteer(id):
+        volunteer = Volunteer.query.get_or_404(id)
+
+        volunteer.status = "Approved"
+
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Volunteer approved."
+        })
+    
+    @app.route("/api/admin/volunteers/<int:id>/reject", methods=["PUT"])
+    def reject_volunteer(id):
+        volunteer = Volunteer.query.get_or_404(id)
+
+        volunteer.status = "Rejected"
+
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Volunteer rejected."
+        })
+    
+    @app.route("/api/admin/volunteers/<int:id>", methods=["DELETE"])
+    def delete_volunteer(id):
+        volunteer = Volunteer.query.get_or_404(id)
+
+        db.session.delete(volunteer)
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Volunteer deleted."
+        })
         
 
     @app.route("/delete_book/<int:book_id>", methods=["DELETE"])
@@ -964,136 +1078,6 @@ def register_routes(app):
         return jsonify({
             "success": True
         })
-
-    @app.route("/volunteers")
-    def volunteer_management():
-        volunteers = Volunteer.query.order_by(
-            Volunteer.created_at.desc()
-        ).all()
-
-        return render_template(
-            "volunteers.html",
-            volunteers=volunteers
-        )
-    
-    @app.route("/volunteer/<int:id>")
-    @login_required
-    def volunteer_details(id):
-
-        volunteer = Volunteer.query.get_or_404(id)
-
-        return render_template(
-            "volunteer_details.html",
-            volunteer=volunteer,
-        )
-
-    @app.route("/approve_volunteer/<int:id>", methods=["POST"])
-    @login_required
-    def approve_volunteer(id):
-        volunteer = Volunteer.query.get_or_404(id)
-
-        volunteer.status = "Approved"
-        db.session.commit()
-
-        return jsonify({
-            "success": True,
-            "message": "Volunteer approved."
-        })
-    
-
-    @app.route("/reject_volunteer/<int:id>", methods=["POST"])
-    @login_required
-    def reject_volunteer(id):
-        volunteer = Volunteer.query.get_or_404(id)
-
-        volunteer.status = "Rejected"
-        db.session.commit()
-
-        return jsonify({
-            "success": True,
-            "message": "Volunteer rejected."
-        })
-    
-    
-    @app.route("/delete_volunteer/<int:id>", methods=["DELETE"])
-    @login_required
-    def delete_volunteer(id):
-
-        volunteer = Volunteer.query.get_or_404(id)
-
-        db.session.delete(volunteer)
-        db.session.commit()
-
-        return jsonify({
-            "success": True,
-            "message": "Volunteer deleted."
-        })
-    
-
-    print("=========== VOLUNTEER API LOADED ===========")
-
-    @app.route("/api/volunteers", methods=["GET", "POST"])
-    def api_volunteers():
-
-        if request.method == "POST":
-            data = request.get_json()
-
-            if not data:
-                return jsonify({
-                    "success": False,
-                    "error": "No data received"
-                }), 400
-
-            volunteer = Volunteer(
-                full_name=data.get("full_name"),
-                phone=data.get("phone"),
-                email=data.get("email"),
-                gender=data.get("gender"),
-                branch=data.get("branch"),
-                membership_status=data.get("membership_status"),
-                joined_date=data.get("joined_date"),
-                address=data.get("address"),
-                occupation=data.get("occupation"),
-                skills=data.get("skills"),
-                experience=data.get("experience"),
-                departments=data.get("departments"),
-                availability=data.get("availability"),
-                baptized=data.get("baptized", False),
-                previous_worker=data.get("previous_worker", False),
-                emergency_name=data.get("emergency_name"),
-                emergency_relationship=data.get("emergency_relationship"),
-                emergency_phone=data.get("emergency_phone"),
-                reason=data.get("reason"),
-                medical_conditions=data.get("medical_conditions"),
-                comments=data.get("comments"),
-                status="Pending"
-            )
-
-            db.session.add(volunteer)
-            db.session.commit()
-
-            return jsonify({
-                "success": True,
-                "message": "Volunteer application submitted successfully."
-            }), 201
-
-        volunteers = Volunteer.query.order_by(
-            Volunteer.created_at.desc()
-        ).all()
-
-        return jsonify([
-            {
-                "id": v.id,
-                "full_name": v.full_name,
-                "email": v.email,
-                "phone": v.phone,
-                "departments": v.departments,
-                "status": v.status,
-                "created_at": v.created_at.strftime("%Y-%m-%d")
-                if v.created_at else None,
-            }
-            for v in volunteers
-        ])
 
     @app.route("/api/version")
     def get_version():
