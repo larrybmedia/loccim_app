@@ -1079,6 +1079,17 @@ def register_routes(app):
             "success": True
         })
 
+    @app.route("/api/routes")
+    def show_routes():
+        return jsonify([
+            {
+                "endpoint": r.endpoint,
+                "path": r.rule,
+                "methods": list(r.methods)
+            }
+            for r in app.url_map.iter_rules()
+        ])
+
     @app.route("/api/version")
     def get_version():
         return jsonify({
