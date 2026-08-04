@@ -110,14 +110,47 @@
             padding: 40px;
             color: gray;
         }
+
+        @media (max-width: 768px) {
+
+            .sidebar {
+                width: 220px;
+            }
+
+            .container {
+                margin-left: 220px;
+                width: calc(100% - 220px);
+                padding: 20px;
+            }
+
+            table {
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 600px) {
+
+            .sidebar {
+                position: relative;
+                width: 100%;
+                height: auto;
+            }
+
+            .container {
+                margin-left: 0;
+                width: 100%;
+                padding: 15px;
+            }
+        }
     </style>
 
 </head>
 
 <body>
+    
     <div class="sidebar">
     <h2>LOCCIM ADMIN</h2>
-    <a href="/dashboard" class="active">🏠 Dashboard</a>
+    <a href="/dashboard">🏠 Dashboard</a>
     <a href="/announcements">📢 Announcements</a>
     <a href="/sermons">🎤 Sermons</a>
     <a href="/prayers">🙏 Prayers</a>
@@ -125,7 +158,7 @@
     <a href="/events">🗓️ Events</a>
     <a href="/livestream">📹 Live Stream</a>
     <a href="/gallery">🖼️ Gallery</a>
-    <a href="/volunteers">🙋 Volunteer Management</a>
+    <a href="/volunteers" class="active">🙋 Volunteer Management</a>
     <a href="/logout" class="logout-btn">🚪 Logout</a>
 </div>
 
