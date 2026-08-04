@@ -993,10 +993,12 @@ def register_routes(app):
         volunteer = Volunteer.query.get_or_404(id)
 
         volunteer.status = "Approved"
-
         db.session.commit()
 
-        return redirect(url_for("volunteer_management"))
+        return jsonify({
+            "success": True,
+            "message": "Volunteer approved."
+        })
     
 
     @app.route("/reject_volunteer/<int:id>", methods=["POST"])
@@ -1005,21 +1007,27 @@ def register_routes(app):
         volunteer = Volunteer.query.get_or_404(id)
 
         volunteer.status = "Rejected"
-
         db.session.commit()
 
-        return redirect(url_for("volunteer_management"))
+        return jsonify({
+            "success": True,
+            "message": "Volunteer rejected."
+        })
     
     
-    @app.route("/delete_volunteer/<int:id>", methods=["POST"])
+    @app.route("/delete_volunteer/<int:id>", methods=["DELETE"])
     @login_required
     def delete_volunteer(id):
+
         volunteer = Volunteer.query.get_or_404(id)
 
         db.session.delete(volunteer)
         db.session.commit()
 
-        return redirect(url_for("volunteer_management"))
+        return jsonify({
+            "success": True,
+            "message": "Volunteer deleted."
+        })
     
 
     print("=========== VOLUNTEER API LOADED ===========")
