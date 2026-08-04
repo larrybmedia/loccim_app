@@ -24,41 +24,51 @@
         =========================== */
 
         .sidebar{
+            width:260px;
+            background:#4b0082;
+            color:#fff;
+            padding:30px 20px;
             position:fixed;
             top:0;
             left:0;
-            width:250px;
             height:100vh;
-            background:#4b0082;
-            color:#fff;
-            overflow-y:auto;
-            box-shadow:3px 0 10px rgba(0,0,0,.15);
+            display:flex;
+            flex-direction:column;
+            box-shadow:0 0 15px rgba(0,0,0,.15);
         }
 
         .sidebar h2{
-            color:#fff;
             text-align:center;
-            padding:20px;
+            margin-bottom:25px;
+            padding-bottom:15px;
             border-bottom:1px solid rgba(255,255,255,.2);
+            color:#fff;
         }
 
         .sidebar a{
             display:block;
-            color:#fff;
+            color:rgba(255,255,255,.9);
             text-decoration:none;
-            padding:15px 20px;
-            transition:.3s;
+            padding:12px 15px;
+            border-radius:8px;
+            margin-bottom:8px;
+            transition:.25s;
         }
 
         .sidebar a:hover,
         .sidebar a.active{
             background:rgba(255,255,255,.15);
-            border-left:5px solid gold;
-            padding-left:15px;
+            color:#fff;
         }
 
         .logout-btn{
-            background:#d32f2f;
+            margin-top:auto;
+            background:#e74c3c;
+            text-align:center;
+        }
+
+        .logout-btn:hover{
+            background:#c0392b;
         }
 
         /* ===========================
@@ -66,9 +76,9 @@
         =========================== */
 
         .container{
-            margin-left:250px;
-            width:calc(100% - 250px);
-            padding:30px;
+            margin-left:260px;
+            width:calc(100% - 260px);
+            padding:35px;
         }
 
         .container h2{
@@ -161,10 +171,10 @@
         }
 
         /* ===========================
-        MOBILE
+        RESPONSIVE
         =========================== */
 
-        @media(max-width:768px){
+        @media (max-width:900px){
 
             .sidebar{
                 width:220px;
@@ -178,7 +188,7 @@
 
         }
 
-        @media(max-width:600px){
+        @media (max-width:768px){
 
             body{
                 display:block;
