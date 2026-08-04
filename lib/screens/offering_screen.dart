@@ -260,15 +260,6 @@ class OfferingScreen extends StatelessWidget {
                 ),
                 _buildAccountCard(
                   context,
-                  title: "Welfare Fund",
-                  bank: "UBA",
-                  accountName: "LOCCIM Welfare",
-                  accountNumber: "1122222222",
-                  icon: Icons.favorite,
-                  color: Colors.pink,
-                ),
-                _buildAccountCard(
-                  context,
                   title: "Youth Ministry",
                   bank: "First Bank",
                   accountName: "LOCCIM Youth",
