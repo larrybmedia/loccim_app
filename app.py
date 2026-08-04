@@ -987,6 +987,8 @@ def register_routes(app):
             volunteer=volunteer,
         )
 
+    print("=========== VOLUNTEER API LOADED ===========")
+
     @app.route("/api/volunteers", methods=["GET", "POST"])
     def api_volunteers():
 
