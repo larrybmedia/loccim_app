@@ -987,6 +987,41 @@ def register_routes(app):
             volunteer=volunteer,
         )
 
+    @app.route("/approve_volunteer/<int:id>", methods=["POST"])
+    @login_required
+    def approve_volunteer(id):
+        volunteer = Volunteer.query.get_or_404(id)
+
+        volunteer.status = "Approved"
+
+        db.session.commit()
+
+        return redirect(url_for("volunteer_management"))
+    
+
+    @app.route("/reject_volunteer/<int:id>", methods=["POST"])
+    @login_required
+    def reject_volunteer(id):
+        volunteer = Volunteer.query.get_or_404(id)
+
+        volunteer.status = "Rejected"
+
+        db.session.commit()
+
+        return redirect(url_for("volunteer_management"))
+    
+    
+    @app.route("/delete_volunteer/<int:id>", methods=["POST"])
+    @login_required
+    def delete_volunteer(id):
+        volunteer = Volunteer.query.get_or_404(id)
+
+        db.session.delete(volunteer)
+        db.session.commit()
+
+        return redirect(url_for("volunteer_management"))
+    
+
     print("=========== VOLUNTEER API LOADED ===========")
 
     @app.route("/api/volunteers", methods=["GET", "POST"])
