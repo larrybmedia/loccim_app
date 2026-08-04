@@ -277,30 +277,94 @@ button:hover{
 
 <div class="actions">
 
-<form action="/approve_volunteer/{{ volunteer.id }}" method="POST">
-<button class="approve">
-Approve
+<button type="button" class="approve"
+        onclick="approveVolunteer('{{ volunteer.id }}')">
+    Approve
 </button>
-</form>
 
-<form action="/reject_volunteer/{{ volunteer.id }}" method="POST">
-<button class="reject">
-Reject
+<button type="button" class="reject"
+        onclick="rejectVolunteer('{{ volunteer.id }}')">
+    Reject
 </button>
-</form>
 
-<form action="/delete_volunteer/{{ volunteer.id }}" method="POST"
-onsubmit="return confirm('Delete this volunteer permanently?')">
-<button class="delete">
-Delete
+<button type="button" class="delete"
+        onclick="deleteVolunteer('{{ volunteer.id }}')">
+    Delete
 </button>
-</form>
 
 </div>
 
 </div>
 
 </div>
+
+<script>
+async function approveVolunteer(id) {
+    try {
+        const response = await fetch("/api/admin/volunteers/" + id + "/approve", {
+            method: "PUT"
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert("Volunteer approved successfully.");
+            window.location.href = "/volunteers";
+        } else {
+            alert(data.message || "Approval failed.");
+        }
+
+    } catch (e) {
+        console.error(e);
+        alert("Network error.");
+    }
+}
+
+async function rejectVolunteer(id) {
+    try {
+        const response = await fetch("/api/admin/volunteers/" + id + "/reject", {
+            method: "PUT"
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert("Volunteer rejected.");
+            window.location.href = "/volunteers";
+        } else {
+            alert(data.message || "Reject failed.");
+        }
+
+    } catch (e) {
+        console.error(e);
+        alert("Network error.");
+    }
+}
+
+async function deleteVolunteer(id) {
+
+    if (!confirm("Delete this volunteer permanently?")) return;
+
+    try {
+        const response = await fetch("/api/admin/volunteers/" + id, {
+            method: "DELETE"
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert("Volunteer deleted.");
+            window.location.href = "/volunteers";
+        } else {
+            alert(data.message || "Delete failed.");
+        }
+
+    } catch (e) {
+        console.error(e);
+        alert("Network error.");
+    }
+}
+</script>
 
 </body>
 </html>
