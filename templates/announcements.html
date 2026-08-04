@@ -154,6 +154,18 @@ button:hover{
     border-left:5px solid #4b0082;
 }
 
+.announcement-card img,
+.announcement-card video{
+    width:100%;
+    max-width:500px;
+    border-radius:10px;
+    display:block;
+}
+
+.announcement-card video{
+    background:#000;
+}
+
 .announcement-title{
     font-size:18px;
     font-weight:bold;
@@ -180,6 +192,52 @@ button:hover{
     color:#888;
 }
 
+.delete-btn{
+    margin-top:15px;
+    background:#e74c3c;
+}
+
+.delete-btn:hover{
+    background:#c0392b;
+}
+
+/* ===========================
+   RESPONSIVE
+=========================== */
+
+@media (max-width:900px){
+
+    .sidebar{
+        width:220px;
+    }
+
+    .main{
+        margin-left:220px;
+        padding:20px;
+    }
+
+}
+
+@media (max-width:768px){
+
+    body{
+        display:block;
+    }
+
+    .sidebar{
+        position:relative;
+        width:100%;
+        height:auto;
+    }
+
+    .main{
+        margin-left:0;
+        width:100%;
+        padding:15px;
+    }
+
+}
+
 </style>
 </head>
 
@@ -190,8 +248,8 @@ button:hover{
 <div class="sidebar">
 
     <h2>LOCCIM ADMIN</h2>
-    <a href="/dashboard" class="active">🏠 Dashboard</a>
-    <a href="/announcements">📢 Announcements</a>
+    <a href="/dashboard">🏠 Dashboard</a>
+    <a href="/announcements" class="active">📢 Announcements</a>
     <a href="/sermons">🎤 Sermons</a>
     <a href="/prayers">🙏 Prayers</a>
     <a href="/testimonies">💬 Testimonies</a>
@@ -206,6 +264,22 @@ button:hover{
 <!-- MAIN -->
 
 <div class="main">
+
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div style="
+                    background:#d4edda;
+                    color:#155724;
+                    padding:15px;
+                    border-radius:8px;
+                    margin-bottom:20px;
+                ">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
 
     <h1 class="page-title">
         📢 Church Announcements
@@ -249,8 +323,9 @@ button:hover{
             </div>
 
             <div class="form-group">
-                <label>Category</label>
-                <select name="category" required>
+                <label for="category">Category</label>
+                <select id="category" name="category" required>
+                    <option value="">-- Select Category --</option>
                     <option value="General">General</option>
                     <option value="Church">Church</option>
                     <option value="Event">Event</option>
@@ -261,24 +336,28 @@ button:hover{
             </div>
 
             <div class="form-group">
-                <label>Flyer Image</label>
+                <label for="flyer">Flyer Image</label>
                 <input
+                    id="flyer"
                     type="file"
                     name="flyer"
-                    accept="image/*">
+                    accept=".jpg,.jpeg,.png,.gif,.webp,image/*">
             </div>
 
             <div class="form-group">
-                <label>Video</label>
+                <label for="video">Video</label>
                 <input
+                    id="video"
                     type="file"
                     name="video"
-                    accept="video/*">
+                    accept=".mp4,.mov,.avi,.mkv,.webm,video/*">
             </div>
 
-            <button type="submit">
-                📢 Publish Announcement
-            </button>
+            <div class="form-group">
+                <button type="submit">
+                    📢 Publish Announcement
+                </button>
+            </div>
 
         </form>
 
@@ -302,27 +381,13 @@ button:hover{
 
             {% if a.flyer %}
             <div style="margin:15px 0;">
-                <img
-                    src="{{ a.flyer }}"
-                    alt="Announcement Flyer"
-                    style="
-                        width:100%;
-                        max-width:500px;
-                        border-radius:10px;
-                        box-shadow:0 2px 10px rgba(0,0,0,.15);
-                    ">
+                <img src="{{ a.flyer }}" alt="Announcement Flyer">
             </div>
             {% endif %}
 
             {% if a.video %}
             <div style="margin:15px 0;">
-                <video
-                    controls
-                    style="
-                        width:100%;
-                        max-width:500px;
-                        border-radius:10px;
-                    ">
+                <video controls>
                     <source src="{{ a.video }}">
                     Your browser does not support video.
                 </video>
@@ -336,7 +401,7 @@ button:hover{
             <div class="announcement-meta">
                 {{ a.type }} |
                 {{ a.category }} |
-                {{ a.created_at }}
+                {{ a.created_at.strftime("%d %b %Y %I:%M %p") if a.created_at else "" }}
             </div>
 
             <form
@@ -345,17 +410,7 @@ button:hover{
                 onsubmit="return confirm('Delete this announcement?');"
                 style="margin-top:10px;"
             >
-                <button
-                    type="submit"
-                    style="
-                        background:#e74c3c;
-                        color:white;
-                        border:none;
-                        padding:8px 14px;
-                        border-radius:6px;
-                        cursor:pointer;
-                    "
-                >
+                <button type="submit" class="delete-btn">
                     🗑 Delete
                 </button>
             </form>
@@ -367,7 +422,8 @@ button:hover{
     {% else %}
 
         <div class="empty-state">
-            No announcements have been published yet.
+            <h3>📢 No Announcements</h3>
+            <p>No announcements have been published yet.</p>
         </div>
 
     {% endif %}
