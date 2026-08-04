@@ -1070,6 +1070,14 @@ def register_routes(app):
             "success": True,
             "message": "Volunteer deleted."
         })
+
+    @app.route("/volunteer/<int:id>")
+    def volunteer_details(id):
+        volunteer = Volunteer.query.get_or_404(id)
+        return render_template(
+            "volunteer_details.html",
+            volunteer=volunteer
+        )
         
 
     @app.route("/delete_book/<int:book_id>", methods=["DELETE"])

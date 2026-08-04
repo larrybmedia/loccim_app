@@ -323,26 +323,6 @@
 <script>
 async function approveVolunteer(id) {
     try {
-        const response = await fetch("/approve_volunteer/" + id, {
-            method: "POST"
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            alert("Volunteer approved successfully.");
-            location.reload();
-        } else {
-            alert(data.message || "Approval failed.");
-        }
-    } catch (e) {
-        alert("Network error.");
-        console.error(e);
-    }
-}
-
-async function approveVolunteer(id) {
-    try {
         const response = await fetch("/api/admin/volunteers/" + id + "/approve", {
             method: "PUT"
         });
