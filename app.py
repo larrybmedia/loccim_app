@@ -14,6 +14,7 @@ from flask import (
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO
+from flask_jwt_extended import JWTManager, create_access_token
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from flask_cors import cross_origin
@@ -54,15 +55,12 @@ cloudinary.config(
     secure=True,
 )
 
-print("Cloud Name:", os.getenv("CLOUDINARY_CLOUD_NAME"))
-print("API Key:", os.getenv("CLOUDINARY_API_KEY"))
-print("API Secret exists:", os.getenv("CLOUDINARY_API_SECRET") is not None)
-
 # =========================
 # CONFIG
 # =========================
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "loccim_secret")
+    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
 
     database_url = os.environ.get("DATABASE_URL")
 
@@ -105,7 +103,7 @@ def login_required(f):
 # =========================
 def create_app():
     app.config.from_object(Config)
-    print("DATABASE URI:", app.config["SQLALCHEMY_DATABASE_URI"])
+    print("Database configured:", bool(app.config["SQLALCHEMY_DATABASE_URI"]))
 
     # ✅ FIXED CORS (THIS IS YOUR MAIN ISSUE)
     CORS(
@@ -120,6 +118,8 @@ def create_app():
 
     db.init_app(app)
     migrate.init_app(app, db)
+
+    jwt = JWTManager(app)
     socketio.init_app(
     app,
     cors_allowed_origins=["https://loccim-frontend.onrender.com", "https://loccim-1a612.web.app"],
@@ -202,12 +202,21 @@ def register_routes(app):
         password = data.get("password")
         user = User.query.filter_by(username=username).first()
         if user and check_password_hash(user.password, password):
-            session.clear()
-            session["logged_in"] = True
-            session["user_id"] = user.id
-            session["username"] = user.username
-            session.permanent = True
-            return jsonify({"success": True, "role": user.role, "username": user.username}), 200
+
+            access_token = create_access_token(
+                identity=str(user.id),
+                additional_claims={
+                    "role": user.role,
+                    "username": user.username,
+                }
+            )
+
+            return jsonify({
+                "success": True,
+                "access_token": access_token,
+                "role": user.role,
+                "username": user.username,
+            }), 200
         return jsonify({"success": False, "error": "Invalid username or password"}), 401
 
     @app.route("/logout")
