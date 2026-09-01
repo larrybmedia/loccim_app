@@ -17,6 +17,16 @@ class ProfessionalLoginPage extends StatefulWidget {
   State<ProfessionalLoginPage> createState() => _ProfessionalLoginPageState();
 }
 
+/// Compatibility wrapper for existing navigation/guards.
+class LoginScreen extends ProfessionalLoginPage {
+  const LoginScreen({
+    super.key,
+    super.title,
+    super.subtitle,
+    super.onBackendAdminTap,
+  });
+}
+
 class _ProfessionalLoginPageState extends State<ProfessionalLoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
