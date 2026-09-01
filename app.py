@@ -495,7 +495,6 @@ def register_routes(app):
     
     @app.route("/api/gallery")
     def api_gallery():
-
         items = Gallery.query.all()
 
         return jsonify([
@@ -503,7 +502,8 @@ def register_routes(app):
                 "id": i.id,
                 "title": i.title,
                 "image_url": i.image_url,
-                "media_type": i.media_type
+                "media_type": i.media_type,
+                "images": json.loads(i.images) if i.images else []
             }
             for i in items
         ])
@@ -587,36 +587,51 @@ def register_routes(app):
     
     @app.route("/upload_gallery", methods=["POST"])
     def upload_gallery():
-        # 1. Get title and media_type from the request form
-        title = request.form.get("title")
-        media_type = request.form.get("media_type")
-        
-        # 2. Get the list of files from the request
-        files = request.files.getlist("file")
-        
-        if not files or files[0].filename == '':
-            return jsonify({"success": False, "error": "No files selected"}), 400
 
-        uploaded_items = []
-        
-        # 3. Process the files
+        title = request.form.get("title")
+        media_type = request.form.get("media_type", "image")
+
+        files = request.files.getlist("file")
+
+        if not files or files[0].filename == '':
+            return jsonify({
+                "success": False,
+                "error": "No files selected"
+            }), 400
+
+        uploaded_urls = []
+
         for file in files:
             if file and file.filename:
                 url = upload_to_cloudinary(file, "gallery")
+                uploaded_urls.append(url)
 
-                gallery_item = Gallery(
-                    title=title,
-                    media_type=media_type,
-                    image_url=url
-                )
-                db.session.add(gallery_item)
-                uploaded_items.append(gallery_item)
-                
-        # 5. Commit all at once
+        if not uploaded_urls:
+            return jsonify({
+                "success": False,
+                "error": "No valid files uploaded"
+            }), 400
+
+        gallery_item = Gallery(
+            title=title or "Untitled Media",
+            media_type=media_type,
+            image_url=uploaded_urls[0],
+            images=json.dumps(uploaded_urls)
+        )
+
+        db.session.add(gallery_item)
         db.session.commit()
-        
-        return jsonify({"success": True, "message": f"Uploaded {len(uploaded_items)} items."})
 
+        return jsonify({
+            "success": True,
+            "message": f"Uploaded {len(uploaded_urls)} items.",
+            "id": gallery_item.id,
+            "title": gallery_item.title,
+            "media_type": gallery_item.media_type,
+            "image_url": gallery_item.image_url,
+            "images": uploaded_urls
+        })
+    
     @app.route("/prayers")
     @login_required
     def prayers():
