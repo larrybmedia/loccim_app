@@ -496,15 +496,14 @@ def register_routes(app):
     
     @app.route("/api/gallery")
     def api_gallery():
-        items = Gallery.query.all()
+        items = Gallery.query.order_by(Gallery.id.desc()).all()
 
         return jsonify([
             {
                 "id": i.id,
                 "title": i.title,
                 "image_url": i.image_url,
-                "media_type": i.media_type,
-                "images": json.loads(i.images) if i.images else []
+                "media_type": i.media_type
             }
             for i in items
         ])
