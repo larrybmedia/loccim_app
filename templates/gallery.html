@@ -570,7 +570,7 @@
         if (!confirm(confirmationMessage)) return;
 
         const deletePromises = selectedItemIds.map(itemId => {
-            return fetch(`/delete_gallery/${itemId}`, { method: "DELETE" })
+            return fetch(`/admin/delete-gallery/${itemId}`, { method: "POST" })
                 .then(res => res.json())
                 .then(data => ({ id: itemId, success: data.success }))
                 .catch(err => ({ id: itemId, success: false, error: err }));
