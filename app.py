@@ -214,13 +214,28 @@ def register_routes(app):
     @app.route("/api/login", methods=["POST"])
     def api_login():
         data = request.get_json()
+
         if not data:
-            return jsonify({"success": False, "error": "Missing request body"}), 400
+            return jsonify({
+                "success": False,
+                "error": "Missing request body"
+            }), 400
+
         username = data.get("username")
         password = data.get("password")
+
         user = User.query.filter_by(username=username).first()
+
         if user and check_password_hash(user.password, password):
 
+            # Flask web session
+            session.clear()
+            session["logged_in"] = True
+            session["user_id"] = user.id
+            session["username"] = user.username
+            session.permanent = True
+
+            # JWT for Flutter/mobile API
             access_token = create_access_token(
                 identity=str(user.id),
                 additional_claims={
@@ -235,7 +250,11 @@ def register_routes(app):
                 "role": user.role,
                 "username": user.username,
             }), 200
-        return jsonify({"success": False, "error": "Invalid username or password"}), 401
+
+        return jsonify({
+            "success": False,
+            "error": "Invalid username or password"
+        }), 401
 
     @app.route("/logout")
     def logout():
