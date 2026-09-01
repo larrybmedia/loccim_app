@@ -59,7 +59,6 @@ class Gallery(db.Model):
     title = db.Column(db.String(200), default='Untitled Media')
     image_url = db.Column(db.String(500))
     media_type = db.Column(db.String(50), default='image')
-    images = db.Column(db.Text, nullable=True)
 
 class Book(db.Model):
     id = db.Column(db.Integer, primary_key=True)
