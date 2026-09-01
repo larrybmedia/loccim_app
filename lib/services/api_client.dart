@@ -1,6 +1,6 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
-import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'token_storage.dart';
@@ -14,12 +14,12 @@ class ApiClient {
   }
 
   // =========================
-  // INTERNAL URL BUILDER (NEW - CLEAN FIX)
+  // INTERNAL URL BUILDER
   // =========================
   static Uri _url(String path) => Uri.parse("$baseUrl$path");
 
   // =========================
-  // JWT HEADERS
+  // HEADERS
   // =========================
   static Future<Map<String, String>> _headers() async {
     final token = await TokenStorage.getToken();
@@ -32,14 +32,14 @@ class ApiClient {
   }
 
   // =========================
-  // 🔐 LOGIN
+  // LOGIN
   // =========================
   static Future<Map<String, dynamic>?> login(
     String username,
     String password,
   ) async {
     try {
-      final res = await http.post(
+      final response = await http.post(
         _url("/api/login"),
         headers: {
           "Content-Type": "application/json",
@@ -51,37 +51,60 @@ class ApiClient {
         }),
       );
 
-      if (res.statusCode != 200) return null;
+      print("LOGIN STATUS: ${response.statusCode}");
+      print("LOGIN RESPONSE: ${response.body}");
 
-      final data = jsonDecode(res.body);
-      final token = data["token"];
+      Map<String, dynamic> data;
 
-      if (token == null) return null;
-
-      await TokenStorage.saveToken(token);
-
-      String role = "user";
-
-      if (data["user"] != null && data["user"]["role"] != null) {
-        role = data["user"]["role"];
-      } else {
-        final decoded = JwtDecoder.decode(token);
-
-        if (decoded["role"] != null) {
-          role = decoded["role"];
-        } else if (decoded["sub"] is Map && decoded["sub"]["role"] != null) {
-          role = decoded["sub"]["role"];
-        }
+      try {
+        data = jsonDecode(response.body);
+      } catch (_) {
+        return {
+          "success": false,
+          "error": "Invalid response from server",
+        };
       }
 
-      await TokenStorage.saveRole(role);
+      if (response.statusCode == 200 && data["success"] == true) {
+        final token = data["access_token"]?.toString();
+
+        if (token == null || token.isEmpty) {
+          return {
+            "success": false,
+            "error": "Login succeeded but no access token was returned.",
+          };
+        }
+
+        final role = data["role"]?.toString() ?? "user";
+        final returnedUsername = data["username"]?.toString() ?? username;
+
+        // Save JWT token
+        await TokenStorage.saveToken(token);
+
+        // Save role
+        await TokenStorage.saveRole(role);
+
+        return {
+          "success": true,
+          "token": token,
+          "role": role,
+          "username": returnedUsername,
+        };
+      }
 
       return {
-        "token": token,
-        "role": role,
+        "success": false,
+        "error": data["error"]?.toString() ??
+            data["message"]?.toString() ??
+            "Invalid username or password",
       };
     } catch (e) {
-      return null;
+      print("LOGIN ERROR: $e");
+
+      return {
+        "success": false,
+        "error": "Unable to connect to the server",
+      };
     }
   }
 
@@ -99,9 +122,17 @@ class ApiClient {
         return jsonDecode(response.body);
       }
 
-      return {"prayers": 0, "sermons": 0, "testimonies": 0};
+      return {
+        "prayers": 0,
+        "sermons": 0,
+        "testimonies": 0,
+      };
     } catch (_) {
-      return {"prayers": 0, "sermons": 0, "testimonies": 0};
+      return {
+        "prayers": 0,
+        "sermons": 0,
+        "testimonies": 0,
+      };
     }
   }
 
@@ -131,13 +162,12 @@ class ApiClient {
   // =========================
   static Future<bool> updateLiveStream(String liveUrl) async {
     try {
-      final headers = await _headers();
-      headers["Content-Type"] = "application/json";
-
       final response = await http.post(
         _url("/api/set_live"),
-        headers: headers,
-        body: jsonEncode({"live_url": liveUrl}),
+        headers: await _headers(),
+        body: jsonEncode({
+          "live_url": liveUrl,
+        }),
       );
 
       return response.statusCode == 200;
@@ -210,15 +240,17 @@ class ApiClient {
   // =========================
   Future<List<dynamic>> fetchSermons() async {
     try {
-      final response = await http.get(_url("/api/sermons"));
+      final response = await http.get(
+        _url("/api/sermons"),
+      );
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
-      } else {
-        throw Exception(
-          "Server error: ${response.statusCode}",
-        );
       }
+
+      throw Exception(
+        "Server error: ${response.statusCode}",
+      );
     } catch (e) {
       print("Error fetching sermons: $e");
       rethrow;
@@ -287,11 +319,14 @@ class ApiClient {
     }
   }
 
+  // =========================
+  // GET ABOUT
+  // =========================
   Future<Map<String, dynamic>> fetchAbout() async {
     print("Loading About Us...");
 
     final response = await http.get(
-      Uri.parse("https://loccim-backend.onrender.com/api/about"),
+      _url("/api/about"),
     );
 
     print("Status: ${response.statusCode}");
@@ -307,7 +342,7 @@ class ApiClient {
   }
 
   // =========================
-  // 📚 GET BOOKS
+  // GET BOOKS
   // =========================
   static Future<List<dynamic>> getBooks() async {
     try {
@@ -319,7 +354,9 @@ class ApiClient {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
-        if (data is List) return data;
+        if (data is List) {
+          return data;
+        }
 
         if (data is Map && data["books"] is List) {
           return data["books"];
@@ -343,6 +380,9 @@ class ApiClient {
     await prefs.setString("role", role);
   }
 
+  // =========================
+  // GET ROLE
+  // =========================
   static Future<String?> getRole() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString("role");

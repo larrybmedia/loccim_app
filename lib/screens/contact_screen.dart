@@ -8,15 +8,6 @@ class ContactScreen extends StatelessWidget {
   // ================= BRANCHES =================
   static const List<Branch> branches = [
     Branch(
-      name: "Mercy Camp Headquarters",
-      pastor: "Prophet Olowoporoku",
-      address: "Makogi Road, Abule Oba, Magboro",
-      phone: "+2348108647938",
-      services: "Sunday - 7:00 AM\nWednesday - 5:30 PM\nFriday - 10:00 PM",
-      mapUrl: "https://maps.google.com/...",
-    ),
-
-    Branch(
       name: "Lagos Branch",
       pastor: "Pastor Ade",
       address: "Ikeja, Lagos",

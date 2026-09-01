@@ -2,7 +2,8 @@ import os
 import cloudinary
 
 class Config:
-    SECRET_KEY = os.environ.get("SECRET_KEY", "loccim_secret_key")
+    SECRET_KEY = os.environ.get("SECRET_KEY", "loccim_secret")
+    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
 
     # Database
     SQLALCHEMY_DATABASE_URI = os.environ.get(

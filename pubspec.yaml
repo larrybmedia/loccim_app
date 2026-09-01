@@ -28,6 +28,8 @@ dependencies:
   web: ^1.1.1
   cached_network_image: ^3.3.1
   video_player: ^2.10.0
+  firebase_core: ^4.0.0
+  firebase_messaging: ^16.0.0
 
 dev_dependencies:
   flutter_test:
@@ -46,23 +48,4 @@ flutter:
     - assets/images/contact_bg.jpg
     - assets/images/church_background.jpg
     - assets/images/book1.jpg
-    - assets/images/aa.jpg
-    - assets/images/os.jpg
-    - assets/images/ab.jpg
-    - assets/images/ao.jpg
-    - assets/images/af.jpg
-    - assets/images/aj.jpg
-    - assets/images/ba.jpg
-    - assets/images/ad.jpg
-    - assets/images/ap.jpg
-    - assets/images/ep.jpg
-    - assets/images/fl.jpg
-    - assets/images/jo.jpg
-    - assets/images/kd.jpg
-    - assets/images/ko.jpg
-    - assets/images/od.jpg
-    - assets/images/ol.jpg
-    - assets/images/or.jpg
-
-firebase_messaging: ^14.7.10
     

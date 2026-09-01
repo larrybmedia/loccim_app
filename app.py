@@ -105,15 +105,37 @@ def create_app():
     app.config.from_object(Config)
     print("Database configured:", bool(app.config["SQLALCHEMY_DATABASE_URI"]))
 
-    # ✅ FIXED CORS (THIS IS YOUR MAIN ISSUE)
+
+    # =========================
+    # CORS CONFIGURATION
+    # =========================
     CORS(
         app,
-        resources={r"/*": {"origins": [
-            "http://localhost:*",
-            "https://loccim-frontend.onrender.com",
-            "https://loccim-1a612.web.app"
-        ]}},
-        supports_credentials=True
+        resources={
+            r"/api/*": {
+                "origins": [
+                    "https://loccim-1a612.web.app",
+                    "https://loccim-1a612.firebaseapp.com",
+                    "https://loccim-frontend.onrender.com",
+                    "http://localhost:10000",
+                    "http://127.0.0.1:10000",
+                    "http://localhost:5000",
+                    "http://127.0.0.1:5000",
+                ],
+                "allow_headers": [
+                    "Content-Type",
+                    "Authorization",
+                ],
+                "methods": [
+                    "GET",
+                    "POST",
+                    "PUT",
+                    "DELETE",
+                    "OPTIONS",
+                ],
+            }
+        },
+        supports_credentials=True,
     )
 
     db.init_app(app)
@@ -122,7 +144,7 @@ def create_app():
     jwt = JWTManager(app)
     socketio.init_app(
     app,
-    cors_allowed_origins=["https://loccim-frontend.onrender.com", "https://loccim-1a612.web.app"],
+    cors_allowed_origins="*",
     async_mode="threading"
 )
 
@@ -130,10 +152,6 @@ def create_app():
     def security_headers(response):
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-XSS-Protection"] = "1; mode=block"
-
-        # ✅ FIX CORS headers for preflight
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
-        response.headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,DELETE,OPTIONS"
 
         return response
 
