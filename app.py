@@ -1,4 +1,5 @@
 ﻿import os
+import json
 from extensions import db, migrate
 from sqlalchemy import func
 from datetime import datetime
@@ -593,43 +594,33 @@ def register_routes(app):
 
         files = request.files.getlist("file")
 
-        if not files or files[0].filename == '':
+        if not files or files[0].filename == "":
             return jsonify({
                 "success": False,
                 "error": "No files selected"
             }), 400
 
-        uploaded_urls = []
+        uploaded_items = []
 
         for file in files:
             if file and file.filename:
+
                 url = upload_to_cloudinary(file, "gallery")
-                uploaded_urls.append(url)
 
-        if not uploaded_urls:
-            return jsonify({
-                "success": False,
-                "error": "No valid files uploaded"
-            }), 400
+                gallery_item = Gallery(
+                    title=title,
+                    media_type=media_type,
+                    image_url=url
+                )
 
-        gallery_item = Gallery(
-            title=title or "Untitled Media",
-            media_type=media_type,
-            image_url=uploaded_urls[0],
-            images=json.dumps(uploaded_urls)
-        )
+                db.session.add(gallery_item)
+                uploaded_items.append(gallery_item)
 
-        db.session.add(gallery_item)
         db.session.commit()
 
         return jsonify({
             "success": True,
-            "message": f"Uploaded {len(uploaded_urls)} items.",
-            "id": gallery_item.id,
-            "title": gallery_item.title,
-            "media_type": gallery_item.media_type,
-            "image_url": gallery_item.image_url,
-            "images": uploaded_urls
+            "message": f"Uploaded {len(uploaded_items)} items."
         })
     
     @app.route("/prayers")
