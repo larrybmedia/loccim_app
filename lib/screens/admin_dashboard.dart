@@ -55,7 +55,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         ui_web.platformViewRegistry.registerViewFactory('admin-login-html',
             (int viewId) {
           final web.HTMLIFrameElement iframe = web.HTMLIFrameElement()
-            ..src = 'https://loccim-backend.onrender.com'
+            ..src = 'https://loccim-app-1.onrender.com'
             ..style.border = 'none'
             ..style.width = '100%'
             ..style.height = '100%'
@@ -81,7 +81,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Future<void> _performLogin(String username, String password) async {
     try {
-      final url = Uri.parse('https://loccim-backend.onrender.com/api/login');
+      final url = Uri.parse('https://loccim-app-1.onrender.com/api/login');
 
       final response = await http.post(
         url,
@@ -139,3 +139,4 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 }
+
