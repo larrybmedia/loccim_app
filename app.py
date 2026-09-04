@@ -71,6 +71,12 @@ class Config:
     SQLALCHEMY_DATABASE_URI = database_url or "sqlite:///loccim.db"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+    # PostgreSQL connection-pool protection for production
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": True,
+        "pool_recycle": 300,
+    }
+
     SESSION_COOKIE_SAMESITE = "None"
     SESSION_COOKIE_SECURE = True
 
