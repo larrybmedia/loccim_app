@@ -422,22 +422,46 @@ def register_routes(app):
         audio1 = request.files.get("audio_file_1")
         audio2 = request.files.get("audio_file_2")
 
+        # Validate required fields
+        if not title:
+            flash("Sermon title is required.", "danger")
+            return redirect(url_for("manage_sermons"))
+
+        if not sermon_date:
+            flash("Sermon date is required. Please select the sermon date.", "danger")
+            return redirect(url_for("manage_sermons"))
+
+        # Validate sermon date format
+        try:
+            parsed_sermon_date = datetime.strptime(
+                sermon_date,
+                "%Y-%m-%d"
+            ).date()
+        except (ValueError, TypeError):
+            flash("Invalid sermon date. Please select a valid date.", "danger")
+            return redirect(url_for("manage_sermons"))
+
+        # Upload audio files
         audio1_url = upload_to_cloudinary(audio1, "sermons") if audio1 else None
         audio2_url = upload_to_cloudinary(audio2, "sermons") if audio2 else None
 
+        # Create sermon
         sermon = Sermon(
             title=title,
             notes=notes,
             audio_url_1=audio1_url,
             audio_url_2=audio2_url,
-            sermon_date=datetime.strptime(
-                sermon_date,
-                "%Y-%m-%d"
-            ).date(),
+            sermon_date=parsed_sermon_date,
         )
 
-        db.session.add(sermon)
-        db.session.commit()
+        try:
+            db.session.add(sermon)
+            db.session.commit()
+            flash("Sermon uploaded successfully!", "success")
+        except Exception as e:
+            db.session.rollback()
+            print("UPLOAD SERMON ERROR:", e)
+            flash(f"Error uploading sermon: {e}", "danger")
 
         return redirect(url_for("manage_sermons"))
 
