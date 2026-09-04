@@ -176,7 +176,6 @@ def handle_disconnect():
 
 @socketio.on("connect")
 def on_connect():
-    # 1. Debug: Check if it's hitting this point
     print("Client attempting to connect...")
     
     # 2. Logic check
@@ -674,7 +673,6 @@ def register_routes(app):
         date = request.form.get("date")
         location = request.form.get("location")
         
-        print(f"DEBUG: Form data received: {title}, {date}, {location}")
 
         image_url = None
 
@@ -685,8 +683,6 @@ def register_routes(app):
             
             if file and file.filename != '':
                 image_url = upload_to_cloudinary(file, "events")
-        else:
-            print("DEBUG: No file found in request.files")
 
         # 3. Save to database
         new_event = Event(
@@ -698,7 +694,6 @@ def register_routes(app):
 
         db.session.add(new_event)
         db.session.commit()
-        print("DEBUG: Event committed to database.")
 
         return redirect(url_for("events"))
 
@@ -739,7 +734,7 @@ def register_routes(app):
 
         if sermon is None:
             flash("Sermon not found.", "danger")
-            return redirect(url_for("sermons"))
+            return redirect(url_for("manage_sermons"))
 
         try:
             db.session.delete(sermon)
@@ -752,7 +747,7 @@ def register_routes(app):
             print("DELETE ERROR:", e)      # <-- Print to Render logs
             flash(f"Error deleting sermon: {e}", "danger")
 
-        return redirect(url_for("sermons"))
+        return redirect(url_for("manage_sermons"))
 
     
     @app.route("/admin/delete-gallery/<int:id>", methods=["POST"])
