@@ -15,7 +15,13 @@ from flask import (
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO
-from flask_jwt_extended import JWTManager, create_access_token
+from flask_jwt_extended import (
+    JWTManager,
+    create_access_token,
+    jwt_required,
+    get_jwt,
+    get_jwt_identity,
+)
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from flask_cors import cross_origin
@@ -60,7 +66,7 @@ cloudinary.config(
 # CONFIG
 # =========================
 class Config:
-    SECRET_KEY = os.environ.get("SECRET_KEY", "loccim_secret")
+    SECRET_KEY = os.environ.get("SECRET_KEY")
     JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
 
     database_url = os.environ.get("DATABASE_URL")
@@ -102,6 +108,23 @@ def login_required(f):
         if not session.get("logged_in"):
             return redirect(url_for("login"))
         return f(*args, **kwargs)
+    return wrapper
+
+
+def admin_jwt_required(f):
+    @wraps(f)
+    @jwt_required()
+    def wrapper(*args, **kwargs):
+        claims = get_jwt()
+
+        if claims.get("role") != "admin":
+            return jsonify({
+                "success": False,
+                "error": "Administrator access required."
+            }), 403
+
+        return f(*args, **kwargs)
+
     return wrapper
 
 
@@ -328,6 +351,7 @@ def register_routes(app):
         })
 
     @app.route("/api/admin/stats", methods=["GET"])
+    @admin_jwt_required
     def admin_stats():
 
         from models import (
@@ -348,30 +372,10 @@ def register_routes(app):
             "prayers": Prayer.query.count()
         })
 
-    @app.route("/create_admin")
-    def create_admin():
-        if not User.query.filter_by(username="admin").first():
-            admin = User(
-                username="admin",
-                password=generate_password_hash("admin1234"),
-                role="admin"
-            )
 
-            db.session.add(admin)
-            db.session.commit()
-
-        return "Admin created"
-
-    @app.route("/check_admin")
-    def check_admin():
-        user = User.query.filter_by(username="admin").first()
-
-        if user:
-            return "Admin exists"
-
-        return "Admin missing"
     
     @app.route('/sermons')
+    @login_required
     def manage_sermons():
         # Fetch all sermons from the database
         # We use .order_by(Sermon.id.desc()) to show the newest ones first
@@ -381,18 +385,60 @@ def register_routes(app):
         return render_template('sermons.html', sermons=sermons)
 
     @app.route("/api/admin/change-password", methods=["POST"])
+    @admin_jwt_required
     def change_password():
-        data = request.json
-        user = User.query.filter_by(username='admin').first()
-        
-        # 1. Verify current password
-        if not check_password_hash(user.password_hash, data['current_password']):
-            return jsonify({"message": "Incorrect current password"}), 401
-    
-        # 2. Update to new password
-        user.password_hash = generate_password_hash(data['new_password'])
+        data = request.get_json(silent=True) or {}
+
+        current_password = data.get("current_password")
+        new_password = data.get("new_password")
+
+        if not current_password or not new_password:
+            return jsonify({
+                "success": False,
+                "message": "Current password and new password are required."
+            }), 400
+
+        if len(new_password) < 12:
+            return jsonify({
+                "success": False,
+                "message": "New password must be at least 12 characters."
+            }), 400
+
+        try:
+            user_id = int(get_jwt_identity())
+        except (TypeError, ValueError):
+            return jsonify({
+                "success": False,
+                "message": "Invalid user identity."
+            }), 401
+
+        user = db.session.get(User, user_id)
+
+        if not user:
+            return jsonify({
+                "success": False,
+                "message": "User not found."
+            }), 404
+
+        if user.role != "admin":
+            return jsonify({
+                "success": False,
+                "message": "Administrator access required."
+            }), 403
+
+        if not check_password_hash(user.password, current_password):
+            return jsonify({
+                "success": False,
+                "message": "Incorrect current password."
+            }), 401
+
+        user.password = generate_password_hash(new_password)
         db.session.commit()
-        return jsonify({"message": "Password updated successfully"})
+
+        return jsonify({
+            "success": True,
+            "message": "Password updated successfully."
+        }), 200
         
     def download_url(url):
       if url:
@@ -489,8 +535,6 @@ def register_routes(app):
     @app.route("/api/testimonies", methods=["GET", "POST", "OPTIONS"])
     def api_testimonies():
 
-        print("REQUEST METHOD:", request.method)
-
         if request.method == "OPTIONS":
             return jsonify({"success": True}), 200
 
@@ -549,14 +593,14 @@ def register_routes(app):
                 {
                     "name": "Prophet Adeniyi P. Olowoporoku",
                     "role": "General Overseer",
-                    "image": "https://loccim-backend.onrender.com/static/images/go.jpg",
+                    "image": "https://loccim-app-1.onrender.com/static/images/go.jpg",
                     "bio": "Founder and General Overseer of LOCCIM Ministries, called to raise end-time believers."
                 },
                 {
                     "name": "Pastor (Mrs) Olowoporoku",
                     "role": "Co-Pastor",
-                    "image": "https://loccim-backend.onrender.com/static/images/mrs_go.jpg",
-                    "bio": "Co-pastor supporting the ministry with teaching, counseling, and women’s fellowship leadership."
+                    "image": "https://loccim-app-1.onrender.com/static/images/mrs_go.jpg",
+                    "bio": "Co-pastor supporting the ministry with teaching, counseling, and women’s fellowship leadership.",
                 }
             ],
 
@@ -578,9 +622,6 @@ def register_routes(app):
     def submit_prayer():
         data = request.get_json()
 
-        print("Received prayer request:")
-        print(data)
-
         prayer = PrayerRequest(
             name=data.get("name"),
             message=data.get("message")
@@ -588,8 +629,6 @@ def register_routes(app):
 
         db.session.add(prayer)
         db.session.commit()
-
-        print("Prayer saved successfully!")
 
         return jsonify({
             "success": True,
@@ -615,6 +654,7 @@ def register_routes(app):
         )
     
     @app.route("/upload_gallery", methods=["POST"])
+    @login_required
     def upload_gallery():
 
         title = request.form.get("title")
@@ -667,14 +707,10 @@ def register_routes(app):
     @app.route("/submit_testimony", methods=["POST", "OPTIONS"])
     def submit_testimony():
 
-        print("REQUEST METHOD:", request.method)
-
         if request.method == "OPTIONS":
             return jsonify({"success": True}), 200
 
         data = request.get_json()
-
-        print("DATA RECEIVED:", data)
 
         testimony = Testimony(
             name=data.get("name"),
@@ -683,13 +719,7 @@ def register_routes(app):
         )
 
         db.session.add(testimony)
-
-        print("BEFORE COMMIT")
-
         db.session.commit()
-
-        print("AFTER COMMIT")
-        print("NEW TESTIMONY ID:", testimony.id)
 
         return jsonify({
             "success": True,
@@ -697,6 +727,7 @@ def register_routes(app):
         }), 201
         
     @app.route("/add_event", methods=["POST"])
+    @login_required
     def add_event():
         # 1. Capture text fields
         title = request.form.get("title")
@@ -729,6 +760,7 @@ def register_routes(app):
 
    # Ensure the methods list explicitly includes 'DELETE'
     @app.route("/delete_event/<int:event_id>", methods=["DELETE"])
+    @login_required
     def delete_event(event_id):
         event = Event.query.get(event_id)
 
@@ -812,6 +844,7 @@ def register_routes(app):
         return redirect(url_for("testimonies"))
     
     @app.route("/delete_testimony/<int:id>", methods=["DELETE"])
+    @login_required
     def delete_testimony(id):
         t = Testimony.query.get(id)
         if t:
@@ -827,8 +860,54 @@ def register_routes(app):
     
 
     @app.route("/api/set_live", methods=["POST"])
+    @jwt_required(optional=True)
     def set_live():
-        live_url = request.form.get("live_url")
+        claims = get_jwt()
+
+        # JWT-authenticated Flutter admin
+        if claims:
+            if claims.get("role") != "admin":
+                return jsonify({
+                    "success": False,
+                    "error": "Administrator access required."
+                }), 403
+
+        # Session-authenticated web admin
+        else:
+            user_id = session.get("user_id")
+
+            if not user_id:
+                if request.is_json:
+                    return jsonify({
+                        "success": False,
+                        "error": "Authentication required."
+                    }), 401
+
+                return redirect(url_for("login"))
+
+            user = db.session.get(User, user_id)
+
+            if not user or user.role != "admin":
+                if request.is_json:
+                    return jsonify({
+                        "success": False,
+                        "error": "Administrator access required."
+                    }), 403
+
+                return redirect(url_for("login"))
+
+        data = request.get_json(silent=True) or request.form
+        live_url = data.get("live_url")
+
+        if not live_url:
+            if request.is_json:
+                return jsonify({
+                    "success": False,
+                    "error": "Live stream URL is required."
+                }), 400
+
+            flash("Live stream URL is required.", "danger")
+            return redirect(url_for("livestream"))
 
         setting = Settings.query.first()
 
@@ -839,8 +918,16 @@ def register_routes(app):
         setting.live_url = live_url
         db.session.commit()
 
-        flash("Live stream updated successfully!", "success")
+        # Flutter/API response
+        if request.is_json:
+            return jsonify({
+                "success": True,
+                "message": "Live stream updated successfully!",
+                "live_url": live_url
+            }), 200
 
+        # Existing web-admin forms
+        flash("Live stream updated successfully!", "success")
         return redirect(url_for("livestream"))
     
     @app.route("/books")
@@ -859,7 +946,7 @@ def register_routes(app):
 
         BASE_URL = os.environ.get(
             "BASE_URL",
-            "https://loccim-backend.onrender.com"
+            "https://loccim-app-1.onrender.com"
         )
 
         books = Book.query.order_by(Book.created_at.desc()).all()
@@ -997,23 +1084,21 @@ def register_routes(app):
                 "error": "All fields are required"
             }), 400
 
-        # You can save to DB or send email here
-        print("NEW CONTACT MESSAGE:", data)
-
         return jsonify({
             "success": True
         })
 
     @app.route("/volunteers")
+    @login_required
     def volunteer_management():
-        volunteers = Volunteer.query.order_by(
-            Volunteer.created_at.desc()
-        ).all()
+            volunteers = Volunteer.query.order_by(
+                Volunteer.created_at.desc()
+            ).all()
 
-        return render_template(
-            "volunteers.html",
-            volunteers=volunteers
-        )
+            return render_template(
+                "volunteers.html",
+                volunteers=volunteers
+            )
 
 
     @app.route("/api/volunteers", methods=["POST"])
@@ -1087,6 +1172,7 @@ def register_routes(app):
             }), 500
 
     @app.route("/api/admin/volunteers", methods=["GET"])
+    @admin_jwt_required
     def get_volunteers():
         volunteers = Volunteer.query.order_by(
             Volunteer.created_at.desc()
@@ -1110,6 +1196,7 @@ def register_routes(app):
         ])
 
     @app.route("/api/admin/volunteers/<int:id>/approve", methods=["PUT"])
+    @admin_jwt_required
     def approve_volunteer(id):
         volunteer = Volunteer.query.get_or_404(id)
 
@@ -1123,6 +1210,7 @@ def register_routes(app):
         })
     
     @app.route("/api/admin/volunteers/<int:id>/reject", methods=["PUT"])
+    @admin_jwt_required
     def reject_volunteer(id):
         volunteer = Volunteer.query.get_or_404(id)
 
@@ -1136,6 +1224,7 @@ def register_routes(app):
         })
     
     @app.route("/api/admin/volunteers/<int:id>", methods=["DELETE"])
+    @admin_jwt_required
     def delete_volunteer(id):
         volunteer = Volunteer.query.get_or_404(id)
 
@@ -1148,6 +1237,7 @@ def register_routes(app):
         })
 
     @app.route("/volunteer/<int:id>")
+    @login_required
     def volunteer_details(id):
         volunteer = Volunteer.query.get_or_404(id)
         return render_template(
@@ -1174,30 +1264,31 @@ def register_routes(app):
             "success": True
         })
 
-    @app.route("/api/routes")
-    def show_routes():
-        return jsonify([
-            {
-                "endpoint": r.endpoint,
-                "path": r.rule,
-                "methods": list(r.methods)
-            }
-            for r in app.url_map.iter_rules()
-        ])
-
-    @app.route("/api/version")
-    def get_version():
-        return jsonify({
-            "version": "1.0.1",
-            "download_url": "https://your-site.com/downloads/app-latest.apk",
-            "force_update": False
-        })
-
-
 def create_default_admin():
-    if not User.query.filter_by(username="admin").first():
-        db.session.add(User(username="admin", password=generate_password_hash("admin1234"), role="admin"))
-        db.session.commit()
+    admin = User.query.filter_by(username="admin").first()
+
+    if admin:
+        return
+
+    initial_password = os.environ.get("INITIAL_ADMIN_PASSWORD")
+
+    if not initial_password:
+        print(
+            "INITIAL_ADMIN_PASSWORD is not configured. "
+            "Skipping default admin creation."
+        )
+        return
+
+    admin = User(
+        username="admin",
+        password=generate_password_hash(initial_password),
+        role="admin"
+    )
+
+    db.session.add(admin)
+    db.session.commit()
+
+    print("Initial admin account created successfully.")
 
 
 # =========================
